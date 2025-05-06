@@ -11,6 +11,7 @@ const Scene3D = () => {
   const cameraRef = useRef(null);
   const controlsRef = useRef(null);
   const objectsRef = useRef({});
+  const environmentRef = useRef({}); // Référence pour les éléments d'environnement
   
   const { 
     sceneObjects, 
@@ -18,8 +19,24 @@ const Scene3D = () => {
     setCameraPosition,
     displayOptions,
     selectedObjectId,
-    setSelectedObjectId
+    setSelectedObjectId,
+    furniture,
+    furnitureObj
   } = useFurnitureStore();
+  
+  // Fonction pour forcer le rendu de la scène
+  const forceRender = () => {
+    if (rendererRef.current && sceneRef.current && cameraRef.current) {
+      // Forcer plusieurs rendus pour garantir que le meuble est visible
+      for (let i = 0; i < 3; i++) {
+        setTimeout(() => {
+          if (rendererRef.current && sceneRef.current && cameraRef.current) {
+            rendererRef.current.render(sceneRef.current, cameraRef.current);
+          }
+        }, i * 50);
+      }
+    }
+  };
   
   // Initialisation de la scène
   useEffect(() => {
@@ -35,7 +52,7 @@ const Scene3D = () => {
       50, 
       containerRef.current.clientWidth / containerRef.current.clientHeight, 
       0.1, 
-      1000
+      2000
     );
     camera.position.set(...cameraPosition);
     cameraRef.current = camera;
@@ -45,6 +62,7 @@ const Scene3D = () => {
     renderer.setSize(containerRef.current.clientWidth, containerRef.current.clientHeight);
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.shadowMap.enabled = displayOptions.showShadows;
+    renderer.sortObjects = false; // Améliore le rendu des objets transparents
     containerRef.current.appendChild(renderer.domElement);
     rendererRef.current = renderer;
     
@@ -53,7 +71,7 @@ const Scene3D = () => {
     controls.enableDamping = true;
     controls.dampingFactor = 0.25;
     controls.minDistance = 1;
-    controls.maxDistance = 100;
+    controls.maxDistance = 500;
     controls.maxPolarAngle = Math.PI / 2;
     controlsRef.current = controls;
     
@@ -65,22 +83,6 @@ const Scene3D = () => {
     directionalLight.position.set(5, 10, 7.5);
     directionalLight.castShadow = displayOptions.showShadows;
     scene.add(directionalLight);
-    
-    // Grid et axes
-    if (displayOptions.showGrid) {
-      const gridHelper = new THREE.GridHelper(
-        20, 
-        20, 
-        0x888888, 
-        0xcccccc
-      );
-      scene.add(gridHelper);
-    }
-    
-    if (displayOptions.showAxes) {
-      const axesHelper = new THREE.AxesHelper(5);
-      scene.add(axesHelper);
-    }
     
     // Animation loop
     const animate = () => {
@@ -121,7 +123,7 @@ const Scene3D = () => {
       window.removeEventListener('resize', handleResize);
       
       if (containerRef.current && rendererRef.current) {
-        containerRef.current.removeChild(rendererRef.current.domElement);
+        containerRef.current.removeChild(renderer.domElement);
       }
       
       // Nettoyage des objets Three.js
@@ -141,7 +143,41 @@ const Scene3D = () => {
         });
       }
     };
-  }, [cameraPosition, displayOptions]);
+  }, [cameraPosition]);
+  
+  // Gestion des éléments d'environnement (grille, axes)
+  useEffect(() => {
+    if (!sceneRef.current) return;
+    
+    // Nettoyer les anciens éléments d'environnement
+    Object.keys(environmentRef.current).forEach(key => {
+      const element = environmentRef.current[key];
+      if (element && sceneRef.current) {
+        sceneRef.current.remove(element);
+      }
+    });
+    environmentRef.current = {};
+    
+    // Ajouter la grille si nécessaire
+    if (displayOptions.showGrid) {
+      const gridHelper = new THREE.GridHelper(
+        20, 
+        20, 
+        0x888888, 
+        0xcccccc
+      );
+      sceneRef.current.add(gridHelper);
+      environmentRef.current.grid = gridHelper;
+    }
+    
+    // Ajouter les axes si nécessaire
+    if (displayOptions.showAxes) {
+      const axesHelper = new THREE.AxesHelper(5);
+      sceneRef.current.add(axesHelper);
+      environmentRef.current.axes = axesHelper;
+    }
+    
+  }, [displayOptions.showGrid, displayOptions.showAxes]);
   
   // Fonction pour créer un mesh sans rotation
   const createMeshForObject = (obj, applyRotation = true) => {
@@ -157,8 +193,11 @@ const Scene3D = () => {
       ? obj.piece.opacity 
       : furnitureOpacity;
     
+    // S'assurer que l'opacité n'est jamais inférieure à 0.2
+    const safeOpacity = Math.max(0.2, pieceOpacity);
+    
     // Transparence activée si opacité < 1
-    const isTransparent = pieceOpacity < 1.0;
+    const isTransparent = safeOpacity < 1.0;
     
     switch (obj.type) {
       case 'floor':
@@ -208,10 +247,12 @@ const Scene3D = () => {
         const pieceMaterial = new THREE.MeshStandardMaterial({
           color: 0xcccccc,
           transparent: isTransparent,
-          opacity: pieceOpacity,
-          // Configuration améliorée pour la transparence
-          depthWrite: !isTransparent,
-          side: isTransparent ? THREE.DoubleSide : THREE.FrontSide
+          opacity: safeOpacity,
+          // Configuration pour un rendu stable
+          depthWrite: true,
+          side: isTransparent ? THREE.DoubleSide : THREE.FrontSide,
+          alphaTest: isTransparent ? 0.1 : 0,
+          wireframe: displayOptions.viewMode === 'wireframe' || false
         });
         
         mesh = new THREE.Mesh(pieceGeometry, pieceMaterial);
@@ -228,6 +269,14 @@ const Scene3D = () => {
             obj.dimensions.depth
           );
         }
+        
+        // Stocker les informations de rendu pour le mode d'affichage
+        mesh.userData.defaultMaterialSettings = {
+          opacity: safeOpacity,
+          transparent: isTransparent,
+          wireframe: false,
+          color: 0xcccccc
+        };
         break;
         
       case 'rod':
@@ -243,7 +292,8 @@ const Scene3D = () => {
           metalness: 0.7,
           roughness: 0.2,
           transparent: isTransparent,
-          opacity: pieceOpacity
+          opacity: safeOpacity,
+          wireframe: displayOptions.viewMode === 'wireframe' || false
         });
         
         mesh = new THREE.Mesh(rodGeometry, rodMaterial);
@@ -264,7 +314,8 @@ const Scene3D = () => {
         const doorMaterial = new THREE.MeshStandardMaterial({
           color: 0xAAAAAA,
           transparent: isTransparent,
-          opacity: pieceOpacity
+          opacity: safeOpacity,
+          wireframe: displayOptions.viewMode === 'wireframe' || false
         });
         
         mesh = new THREE.Mesh(doorGeometry, doorMaterial);
@@ -292,8 +343,13 @@ const Scene3D = () => {
       mesh.userData.type = obj.type;
       
       // Stocker des informations supplémentaires pour la transparence
-      mesh.userData.pieceOpacity = pieceOpacity;
+      mesh.userData.pieceOpacity = safeOpacity;
       mesh.userData.isTransparent = isTransparent;
+      
+      // Configurer l'ordre de rendu pour les objets transparents
+      if (isTransparent) {
+        mesh.renderOrder = 999; // Les rendre en dernier
+      }
     }
     
     return mesh;
@@ -303,7 +359,7 @@ const Scene3D = () => {
   useEffect(() => {
     if (!sceneRef.current) return;
     
-    // Supprimer les anciens objets
+    // Supprimer les anciens objets (sans toucher à la grille et aux axes)
     Object.keys(objectsRef.current).forEach(key => {
       const obj = objectsRef.current[key];
       if (obj && sceneRef.current) {
@@ -332,22 +388,51 @@ const Scene3D = () => {
       if (obj.type === 'furnitureGroup') {
         // Créer un groupe pour le meuble
         const group = new THREE.Group();
-        group.position.set(...obj.position);
-        group.rotation.set(...obj.rotation);
         
-        // Ajouter toutes les pièces du meuble au groupe
+        // Calculer les bornes du meuble pour le positionner correctement
+        const box = new THREE.Box3();
+        let hasMeshes = false;
+        
+        // Ajouter toutes les pièces du meuble au groupe temporairement pour calculer les dimensions
         obj.children.forEach(childObj => {
           let childMesh = createMeshForObject(childObj, false);
           if (childMesh) {
-            // Stocker l'ID original du childMesh pour la sélection
-            const originalId = childMesh.userData.id;
-            
             group.add(childMesh);
-            
-            // Mettre à jour les références pour inclure les enfants
-            objectsRef.current[originalId] = childMesh;
+            // Réappliquer la position et la rotation à l'enfant
+            childMesh.position.set(...childObj.position);
+            if (childObj.rotation) {
+              childMesh.rotation.set(...childObj.rotation);
+            }
+            // Mettre à jour la matrice et calculer la boîte englobante
+            childMesh.updateMatrixWorld();
+            box.expandByObject(childMesh);
+            hasMeshes = true;
           }
         });
+        
+        // Centrer le groupe sur l'origine mais seulement sur X et Z
+        if (hasMeshes) {
+          const center = box.getCenter(new THREE.Vector3());
+          const min = box.min;
+          
+          // Ajuster la position de tous les enfants pour centrer sur X et Z
+          // et positionner le bas du meuble à y=0
+          group.children.forEach(child => {
+            child.position.x -= center.x;
+            child.position.z -= center.z;
+            child.position.y -= min.y; // Aligner le bas du meuble avec y=0
+          });
+          
+          // Maintenir la position originale du groupe
+          group.position.set(...obj.position);
+          group.rotation.set(...obj.rotation);
+          
+          // Mettre à jour les références après centrage
+          group.children.forEach(child => {
+            const originalId = child.userData.id;
+            objectsRef.current[originalId] = child;
+          });
+        }
         
         // Ajouter le groupe à la scène et aux références
         group.userData.id = obj.id;
@@ -366,14 +451,122 @@ const Scene3D = () => {
       }
     });
     
-  }, [sceneObjects, displayOptions]);
+  }, [sceneObjects, displayOptions.furnitureOpacity, displayOptions.viewMode]);
+  
+  // Gestion des modes d'affichage (Solide, Filaire, Réaliste)
+  useEffect(() => {
+    if (!sceneRef.current) return;
+    
+    // Appliquer le mode d'affichage
+    sceneRef.current.traverse((object) => {
+      if (object.type === 'Mesh' && object.material && object.userData.type === 'piece') {
+        const materials = Array.isArray(object.material) ? object.material : [object.material];
+        
+        materials.forEach(material => {
+          const currentOpacity = displayOptions.furnitureOpacity || 1.0;
+          
+          switch (displayOptions.viewMode) {
+            case 'wireframe':
+              material.wireframe = true;
+              material.transparent = true;
+              material.opacity = Math.max(currentOpacity, 0.3); // Minimum 0.3 en wireframe
+              break;
+              
+            case 'solid':
+              material.wireframe = false;
+              material.transparent = currentOpacity < 1.0 || object.userData.isTransparent;
+              material.opacity = currentOpacity;
+              material.metalness = 0;
+              material.roughness = 1;
+              material.color = new THREE.Color(object.userData.defaultMaterialSettings?.color || 0xcccccc);
+              break;
+              
+            case 'realistic':
+              material.wireframe = false;
+              material.transparent = currentOpacity < 1.0 || object.userData.isTransparent;
+              material.opacity = currentOpacity;
+              material.metalness = 0.1;
+              material.roughness = 0.5;
+              material.color = new THREE.Color(0xd4c4b0);
+              break;
+              
+            default:
+              break;
+          }
+          
+          material.needsUpdate = true;
+        });
+      }
+    });
+    
+    // Forcer le rendu après les changements
+    forceRender();
+  }, [displayOptions.viewMode, displayOptions.furnitureOpacity]);
   
   // Mise à jour de la position de la caméra
   useEffect(() => {
     if (cameraRef.current) {
       cameraRef.current.position.set(...cameraPosition);
+      
+      // Mettre à jour le target des contrôles pour regarder le centre du meuble
+      if (controlsRef.current && furniture && furniture.dimensions) {
+        const halfHeight = furniture.dimensions.height / 200;
+        controlsRef.current.target.set(0, halfHeight, 0);
+        controlsRef.current.update();
+      }
+      
+      // Forcer le rendu de tous les matériaux à leur opacité actuelle
+      sceneRef.current?.traverse((object) => {
+        if (object.type === 'Mesh' && object.material && object.userData.type === 'piece') {
+          const materials = Array.isArray(object.material) ? object.material : [object.material];
+          
+          materials.forEach(material => {
+            // Réappliquer l'opacité actuelle
+            const currentOpacity = displayOptions.furnitureOpacity || 1.0;
+            material.opacity = currentOpacity;
+            material.transparent = currentOpacity < 1.0;
+            material.needsUpdate = true;
+          });
+        }
+      });
+      
+      // Forcer le rendu
+      forceRender();
     }
-  }, [cameraPosition]);
+  }, [cameraPosition, furniture, displayOptions.furnitureOpacity]);
+  
+  // Centrage automatique du meuble lors du chargement
+  useEffect(() => {
+    if (!sceneRef.current || !furniture || !furniture.dimensions) return;
+    
+    // Calculer la distance optimale basée sur les dimensions du meuble
+    const dimensions = furniture.dimensions;
+    const maxDimension = Math.max(
+      dimensions.width / 100,  // Convertir en unités Three.js
+      dimensions.height / 100,
+      dimensions.depth / 100
+    );
+    
+    // Distance de caméra proportionnelle aux dimensions du meuble
+    // Réduit le facteur pour être plus proche
+    const cameraDistance = Math.max(maxDimension * 2, 3); // Minimum de 3 unités
+    
+    // Position isométrique automatique au chargement
+    const isometricPosition = [
+      cameraDistance,
+      cameraDistance,
+      cameraDistance
+    ];
+    
+    setCameraPosition(isometricPosition);
+    
+    // Mettre à jour le target des contrôles
+    if (controlsRef.current) {
+      const halfHeight = dimensions.height / 200;
+      controlsRef.current.target.set(0, halfHeight, 0);
+      controlsRef.current.update();
+    }
+  }, [furniture, setCameraPosition]);
   
   // Mise à jour de la sélection
   useEffect(() => {

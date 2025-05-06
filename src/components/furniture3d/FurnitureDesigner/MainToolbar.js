@@ -17,9 +17,10 @@ import {
 } from '@mui/icons-material';
 import { useFurnitureStore } from './store';
 
-// Pour l'instant, composant temporaire pour l'onglet PIÈCE
+// Import des composants pour les onglets
 import RoomTab from './components/tabs/RoomTab';
 import FurnitureTab from './components/tabs/FurnitureTab';
+import DisplayOptionsTab from './components/tabs/DisplayOptionsTab';
 
 const MainToolbar = () => {
   const [currentTab, setCurrentTab] = useState(0);
@@ -39,6 +40,7 @@ const MainToolbar = () => {
     { label: "FAÇADE", disabled: true },
     { label: "FORME", disabled: true },
     { label: "MATÉRIAUX", disabled: true },
+    { label: "AFFICHAGE", disabled: false },
     { label: "AIDE", disabled: false }
   ];
   
@@ -51,7 +53,9 @@ const MainToolbar = () => {
         return <RoomTab />;
       case 2: // MEUBLE
         return <FurnitureTab />;
-      case 8: // AIDE
+      case 8: // AFFICHAGE
+        return <DisplayOptionsTab />;
+      case 9: // AIDE
         return <Box p={2}>Contenu de l'onglet AIDE (à implémenter)</Box>;
       default:
         return <Box p={2}>Onglet non disponible pour le moment</Box>;
@@ -59,8 +63,14 @@ const MainToolbar = () => {
   };
   
   return (
-    <Box sx={{ flexGrow: 0 }}>
-      <AppBar position="static" color="default">
+    <Box sx={{ 
+      flexGrow: 0,
+      position: 'relative',
+      backgroundColor: 'background.paper',
+      borderBottom: 1,
+      borderColor: 'divider'
+    }}>
+      <AppBar position="static" color="default" elevation={0}>
         <Toolbar variant="dense">
           <Typography variant="h6" sx={{ flexGrow: 1 }}>
             Conception de meuble 3D
@@ -98,18 +108,21 @@ const MainToolbar = () => {
           scrollButtons="auto"
           indicatorColor="primary"
           textColor="primary"
+          sx={{ minHeight: 'auto' }}
         >
           {tabs.map((tab, index) => (
             <Tab 
               key={index} 
               label={tab.label} 
-              disabled={tab.disabled} 
+              disabled={tab.disabled}
+              sx={{ minHeight: 'auto', py: 1 }}
             />
           ))}
         </Tabs>
       </AppBar>
       
-      <Box>
+      {/* Contenu des onglets directement intégré */}
+      <Box sx={{ py: 2 }}>
         {getTabContent()}
       </Box>
     </Box>

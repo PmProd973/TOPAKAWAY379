@@ -42,7 +42,6 @@ import Scene3D from './Scene3D';
 //import PiecesList from './components/PiecesList';
 //import FurnitureLibrary from './components/FurnitureLibrary';
 //import MaterialsList from './components/MaterialsList';
-import ViewOptions from './ViewOptions';
 //import ParametricDesigner from './components/ParametricWardrobeDesigner'; // Nouveau composant
 import FurnitureBuilder from './components/FurnitureBuilder';
 import { useFurnitureStore } from './store';
@@ -387,8 +386,7 @@ const FurnitureDesignerPanel = ({ projectId, pieces = [], materials = [] }) => {
                 <FurnitureBuilder />
               )}
               
-             
-              
+                           
               {activeTab === 4 && (
                 <DisplayOptionsTab />
               )}
