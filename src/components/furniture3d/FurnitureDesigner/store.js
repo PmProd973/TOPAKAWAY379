@@ -150,7 +150,7 @@ const useFurnitureStore = create((set, get) => ({
   },
   backPanelOverhang: 0, // Débordement en mm pour la rainure
       sidesExtendToFloor: false,
-      sidesOverlapTopBottom: false, // Nouvelle propriété
+      sidesOverlapTopBottom: true, // Nouvelle propriété
       // Nouvelles propriétés pour le socle
       socleSupports: 0, // Nombre de séparations verticales
       socleSideSupports: false,
@@ -183,7 +183,7 @@ const useFurnitureStore = create((set, get) => ({
   },
   
   // Position de la caméra
-  cameraPosition: [400, 400, 400],
+  cameraPosition: [4, 4, 4],
   cameraTarget: [0, 0, 0],
   
   // Mode d'édition
