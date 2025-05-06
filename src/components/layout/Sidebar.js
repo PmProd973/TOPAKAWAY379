@@ -167,7 +167,7 @@ const Sidebar = () => {
         {
           text: 'Conception 3D',
           icon: <ViewInArIcon />,
-          path: '/conception-3d', // Chemin modifié vers la nouvelle page de conception 3D
+          path: '/conception-3d', // Chemin corrigé pour la page de conception 3D
         }
       ],
     },

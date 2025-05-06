@@ -1,4 +1,4 @@
-// src/components/furniture3d/FurnitureDesigner/components/tabs/DisplayOptionsTab/index.js
+// src/components/furniture3d/FurnitureDesigner/components/ViewOptions.js
 import React from 'react';
 import { 
   Box, 
@@ -19,104 +19,50 @@ import {
   SquareFoot as MeasureIcon,
   Opacity as OpacityIcon
 } from '@mui/icons-material';
-import { useFurnitureStore } from '../../../store';
+import { useFurnitureStore } from '../store';
 
-const DisplayOptionsTab = () => {
+const ViewOptions = () => {
   const { 
     setCameraPosition,
+    gridSize,
+    setGridSize,
+    snapToGrid,
+    toggleSnapToGrid,
+    snapToObjects,
+    toggleSnapToObjects,
+    snapThreshold,
+    setSnapThreshold,
+    showGrid,
+    toggleGrid,
+    showAxes,
+    toggleAxes,
+    viewMode,
+    setViewMode,
+    showDimensions,
+    toggleDimensions,
+    calculateTotalDimensions,
     displayOptions,
-    setDisplayOption,
-    furniture
+    setDisplayOption
   } = useFurnitureStore();
-  
-  // Extraire les valeurs depuis displayOptions avec des valeurs par défaut
-  const {
-    showGrid = true,
-    showAxes = true,
-    showDimensions = true,
-    viewMode = "solid",
-    furnitureOpacity = 1.0
-  } = displayOptions || {};
   
   const setCameraView = (position) => {
     setCameraPosition(position);
-    
-    // Attendre un peu avant de forcer une régénération pour s'assurer que la caméra est bien positionnée
-    setTimeout(() => {
-      const { regenerateScene } = useFurnitureStore.getState();
-      regenerateScene();
-    }, 100);
   };
   
   const handleViewChange = (mode) => {
-    setDisplayOption('viewMode', mode);
+    setViewMode(mode);
   };
   
   const handleCenterView = () => {
-    // Calculer la distance optimale basée sur les dimensions du meuble
-    const dimensions = furniture.dimensions;
-    const maxDimension = Math.max(
-      dimensions.width / 100,  // Convertir en unités Three.js
-      dimensions.height / 100,
-      dimensions.depth / 100
-    );
-    
-    // Distance de caméra proportionnelle aux dimensions du meuble
-    // Multiplié par 3 pour une vue d'ensemble appropriée
-    const cameraDistance = Math.max(maxDimension * 3, 3);
-    
-    // Position isométrique
-    const isometricPosition = [
-      cameraDistance,
-      cameraDistance,
-      cameraDistance
-    ];
-    
+    const totalDimensions = calculateTotalDimensions();
+    const cameraDistance = Math.max(totalDimensions.width, totalDimensions.height, totalDimensions.depth) / 10;
+    const isometricPosition = [cameraDistance, cameraDistance, cameraDistance];
     setCameraPosition(isometricPosition);
-    
-    // Forcer la régénération après le centrage
-    setTimeout(() => {
-      const { regenerateScene } = useFurnitureStore.getState();
-      regenerateScene();
-    }, 100);
   };
   
   // Gestion du changement d'opacité
   const handleOpacityChange = (event, newValue) => {
-    // Normaliser la valeur (0-1)
-    const normalizedValue = newValue / 100;
-    
-    // Mettre à jour l'opacité dans le store
-    setDisplayOption('furnitureOpacity', normalizedValue);
-    
-    // Forcer la régénération de la scène pour appliquer le changement
-    const { regenerateScene } = useFurnitureStore.getState();
-    regenerateScene();
-  };
-  
-  const handleToggleGrid = () => {
-    setDisplayOption('showGrid', !showGrid);
-  };
-  
-  const handleToggleAxes = () => {
-    setDisplayOption('showAxes', !showAxes);
-  };
-  
-  const handleToggleDimensions = () => {
-    setDisplayOption('showDimensions', !showDimensions);
-  };
-  
-  // Calculer une distance basée sur les dimensions du meuble
-  const calculateCameraDistance = (furniture) => {
-    if (!furniture || !furniture.dimensions) return 3; // Valeur par défaut plus proche
-    
-    const maxDimension = Math.max(
-      furniture.dimensions.width / 100,
-      furniture.dimensions.height / 100,
-      furniture.dimensions.depth / 100
-    );
-    
-    return Math.max(maxDimension * 2, 3); // Minimum de 3 unités, facteur réduit de 3 à 2
+    setDisplayOption('furnitureOpacity', newValue / 100);
   };
   
   return (
@@ -138,11 +84,7 @@ const DisplayOptionsTab = () => {
           <Button 
             variant="outlined" 
             size="small"
-            onClick={() => {
-              // Vue de dessus
-              const distance = calculateCameraDistance(furniture);
-              setCameraView([0, distance * 2, 0]);
-            }}
+            onClick={() => setCameraView([0, 1000, 0])}
           >
             Vue de dessus
           </Button>
@@ -150,11 +92,7 @@ const DisplayOptionsTab = () => {
           <Button 
             variant="outlined" 
             size="small"
-            onClick={() => {
-              // Vue de face
-              const distance = calculateCameraDistance(furniture);
-              setCameraView([0, 0, distance * 2]);
-            }}
+            onClick={() => setCameraView([0, 0, 1000])}
           >
             Vue de face
           </Button>
@@ -162,11 +100,7 @@ const DisplayOptionsTab = () => {
           <Button 
             variant="outlined" 
             size="small"
-            onClick={() => {
-              // Vue de côté
-              const distance = calculateCameraDistance(furniture);
-              setCameraView([distance * 2, 0, 0]);
-            }}
+            onClick={() => setCameraView([1000, 0, 0])}
           >
             Vue de côté
           </Button>
@@ -174,11 +108,7 @@ const DisplayOptionsTab = () => {
           <Button 
             variant="outlined" 
             size="small"
-            onClick={() => {
-              // Vue isométrique
-              const distance = calculateCameraDistance(furniture);
-              setCameraView([distance, distance, distance]);
-            }}
+            onClick={() => setCameraView([1000, 1000, 1000])}
           >
             Vue isométrique
           </Button>
@@ -199,6 +129,70 @@ const DisplayOptionsTab = () => {
       <Divider sx={{ my: 2 }} />
       
       <Typography variant="subtitle2" gutterBottom>
+        Options d'alignement
+      </Typography>
+      
+      <FormControlLabel
+        control={
+          <Switch 
+            checked={snapToGrid} 
+            onChange={toggleSnapToGrid}
+            size="small"
+          />
+        }
+        label={<Typography variant="body2">Aligner sur la grille</Typography>}
+      />
+      
+      {snapToGrid && (
+        <Box sx={{ px: 2, mt: 1, mb: 2 }}>
+          <Typography id="grid-size-slider" gutterBottom variant="caption">
+            Taille de la grille: {gridSize} unités
+          </Typography>
+          <Slider
+            value={gridSize}
+            onChange={(e, newValue) => setGridSize(newValue)}
+            aria-labelledby="grid-size-slider"
+            step={1}
+            marks
+            min={1}
+            max={20}
+            size="small"
+          />
+        </Box>
+      )}
+      
+      <FormControlLabel
+        control={
+          <Switch 
+            checked={snapToObjects} 
+            onChange={toggleSnapToObjects}
+            size="small"
+          />
+        }
+        label={<Typography variant="body2">Aligner sur les objets</Typography>}
+      />
+      
+      {snapToObjects && (
+        <Box sx={{ px: 2, mt: 1, mb: 2 }}>
+          <Typography id="snap-threshold-slider" gutterBottom variant="caption">
+            Distance d'alignement: {snapThreshold} unités
+          </Typography>
+          <Slider
+            value={snapThreshold}
+            onChange={(e, newValue) => setSnapThreshold(newValue)}
+            aria-labelledby="snap-threshold-slider"
+            step={1}
+            marks
+            min={5}
+            max={30}
+            size="small"
+          />
+        </Box>
+      )}
+      
+      <Divider sx={{ my: 2 }} />
+      
+      <Typography variant="subtitle2" gutterBottom>
         Options d'affichage
       </Typography>
       
@@ -206,7 +200,7 @@ const DisplayOptionsTab = () => {
         <Tooltip title="Afficher/masquer la grille">
           <IconButton 
             color={showGrid ? "primary" : "default"}
-            onClick={handleToggleGrid}
+            onClick={toggleGrid}
             size="small"
           >
             <GridIcon />
@@ -216,7 +210,7 @@ const DisplayOptionsTab = () => {
         <Tooltip title="Afficher/masquer les axes">
           <IconButton 
             color={showAxes ? "primary" : "default"}
-            onClick={handleToggleAxes}
+            onClick={toggleAxes}
             size="small"
           >
             <VisibilityIcon />
@@ -226,7 +220,7 @@ const DisplayOptionsTab = () => {
         <Tooltip title="Afficher/masquer les dimensions">
           <IconButton 
             color={showDimensions ? "primary" : "default"}
-            onClick={handleToggleDimensions}
+            onClick={toggleDimensions}
             size="small"
           >
             <MeasureIcon />
@@ -234,7 +228,7 @@ const DisplayOptionsTab = () => {
         </Tooltip>
       </Box>
       
-      {/* Section pour l'opacité du meuble */}
+      {/* Nouvelle section pour l'opacité du meuble */}
       <Box sx={{ mt: 2, mb: 3 }}>
         <Typography variant="subtitle2" gutterBottom display="flex" alignItems="center">
           <OpacityIcon fontSize="small" sx={{ mr: 1 }} />
@@ -242,7 +236,7 @@ const DisplayOptionsTab = () => {
         </Typography>
         <Box sx={{ px: 1 }}>
           <Slider
-            value={furnitureOpacity * 100}
+            value={(displayOptions?.furnitureOpacity || 1) * 100}
             onChange={handleOpacityChange}
             aria-labelledby="opacity-slider"
             valueLabelDisplay="auto"
@@ -337,4 +331,4 @@ const DisplayOptionsTab = () => {
   );
 };
 
-export default DisplayOptionsTab;
+export default ViewOptions;

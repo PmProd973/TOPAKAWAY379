@@ -332,16 +332,16 @@ const FurnitureTab = () => {
 
           {/* Nouvelle option pour le débordement des côtés */}
           <Grid item xs={12} sm={6}>
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={furniture.construction.sidesOverlapTopBottom !== false}
-                  onChange={(e) => updateConstructionOption('sidesOverlapTopBottom', e.target.checked)}
-                />
-              }
-              label="Côtés débordent sur dessus/dessous"
-            />
-          </Grid>
+  <FormControlLabel
+    control={
+      <Checkbox
+        checked={furniture.construction.sidesOverlapTopBottom !== false}
+        onChange={(e) => updateConstructionOption('sidesOverlapTopBottom', e.target.checked)}
+      />
+    }
+    label="Côtés débordent sur dessus/dessous"
+  />
+</Grid>
 
           <Grid item xs={12} sm={6}>
             <FormControlLabel
