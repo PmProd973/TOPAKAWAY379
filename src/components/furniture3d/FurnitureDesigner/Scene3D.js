@@ -1,90 +1,147 @@
-// src/components/furniture3d/FurnitureDesigner/Scene3D.js
-import React, { useRef, useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
-import { useFurnitureStore } from './store';
+import { useFurnitureStore } from './store'; // Ajustez le chemin selon votre structure
 
 const Scene3D = () => {
   const containerRef = useRef(null);
   const sceneRef = useRef(null);
-  const rendererRef = useRef(null);
   const cameraRef = useRef(null);
+  const rendererRef = useRef(null);
   const controlsRef = useRef(null);
-  const objectsRef = useRef({});
+  const requestRef = useRef(null);
+  const gridRef = useRef(null);
+  const furnitureRef = useRef(null);
   
-  const { 
-    sceneObjects, 
-    cameraPosition, 
-    setCameraPosition,
-    displayOptions,
-    selectedObjectId,
-    setSelectedObjectId
-  } = useFurnitureStore();
-  
-  // Initialisation de la scène
+  // Récupérer le store
+  const furnitureStore = useFurnitureStore();
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  // Fonction pour désactiver l'élément authenticadepApp qui interfère avec la scène 3D
+  const disableAuthenticadepApp = () => {
+    // Recherche de l'élément par ID
+    const authenticadepApp = document.getElementById('authenticadepApp');
+    if (authenticadepApp) {
+      // Désactiver l'élément en le cachant et en réduisant sa taille
+      authenticadepApp.style.display = 'none';
+      authenticadepApp.style.height = '0';
+      authenticadepApp.style.width = '0';
+      authenticadepApp.style.overflow = 'hidden';
+      authenticadepApp.style.position = 'absolute';
+      authenticadepApp.style.zIndex = '-9999';
+      console.log('authenticadepApp désactivé avec succès');
+    }
+    
+    // Recherche de l'élément par classe ou autres attributs
+    const potentialOverlays = document.querySelectorAll('div[style*="position: fixed"]');
+    potentialOverlays.forEach(element => {
+      const rect = element.getBoundingClientRect();
+      // Si l'élément a une taille proche de celle rapportée (1131px x 954px)
+      if (rect.width > 1000 && rect.height > 900) {
+        element.style.display = 'none';
+        element.style.zIndex = '-9999';
+        console.log('Overlay potentiel désactivé:', element);
+      }
+    });
+  };
+
+  // Initialisation de la scène et des éléments 3D
   useEffect(() => {
-    if (!containerRef.current) return;
+    // Désactiver l'élément problématique
+    disableAuthenticadepApp();
     
-    // Création de la scène
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color(displayOptions.backgroundColor || 0xf0f0f0);
-    sceneRef.current = scene;
+    // Initialiser la scène Three.js
+    const initThreeJS = () => {
+      if (!containerRef.current) return;
+      
+      // Créer la scène
+      const scene = new THREE.Scene();
+      sceneRef.current = scene;
+      scene.background = new THREE.Color(0xf0f0f0);
+      
+      // Créer la caméra
+      const aspect = containerRef.current.clientWidth / containerRef.current.clientHeight;
+      const camera = new THREE.PerspectiveCamera(45, aspect, 1, 10000);
+      camera.position.set(1000, 1000, 1000);
+      camera.lookAt(0, 0, 0);
+      cameraRef.current = camera;
+      
+      // Créer le renderer avec antialiasing
+      const renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(containerRef.current.clientWidth, containerRef.current.clientHeight);
+      renderer.setPixelRatio(window.devicePixelRatio);
+      renderer.shadowMap.enabled = true;
+      containerRef.current.appendChild(renderer.domElement);
+      rendererRef.current = renderer;
+      
+      // Ajouter les contrôles de caméra
+      const controls = new OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.25;
+      controls.screenSpacePanning = false;
+      controls.minDistance = 10;
+      controls.maxDistance = 3000;
+      controls.maxPolarAngle = Math.PI / 2;
+      controlsRef.current = controls;
+      
+      // Ajouter les lumières
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+      scene.add(ambientLight);
+      
+      const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+      directionalLight.position.set(1000, 1000, 1000);
+      directionalLight.castShadow = true;
+      directionalLight.shadow.mapSize.width = 2048;
+      directionalLight.shadow.mapSize.height = 2048;
+      directionalLight.shadow.camera.near = 1;
+      directionalLight.shadow.camera.far = 5000;
+      directionalLight.shadow.camera.left = -1000;
+      directionalLight.shadow.camera.right = 1000;
+      directionalLight.shadow.camera.top = 1000;
+      directionalLight.shadow.camera.bottom = -1000;
+      scene.add(directionalLight);
+      
+      // Ajouter une grille de référence
+      const grid = new THREE.GridHelper(2000, 20, 0x888888, 0xcccccc);
+      scene.add(grid);
+      gridRef.current = grid;
+      
+      // Ajouter un sol
+      const groundGeometry = new THREE.PlaneGeometry(2000, 2000);
+      const groundMaterial = new THREE.MeshStandardMaterial({ 
+        color: 0xcccccc, 
+        roughness: 0.8,
+        transparent: true,
+        opacity: 0.5
+      });
+      const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+      ground.rotation.x = -Math.PI / 2;
+      ground.receiveShadow = true;
+      scene.add(ground);
+      
+      // Créer un meuble par défaut
+      createFurniture();
+      
+      // Marquer comme initialisé
+      setIsInitialized(true);
+    };
     
-    // Création de la caméra
-    const camera = new THREE.PerspectiveCamera(
-      50, 
-      containerRef.current.clientWidth / containerRef.current.clientHeight, 
-      0.1, 
-      1000
-    );
-    camera.position.set(...cameraPosition);
-    cameraRef.current = camera;
+    // Gérer le redimensionnement de la fenêtre
+    const handleResize = () => {
+      if (!containerRef.current || !cameraRef.current || !rendererRef.current) return;
+      
+      const width = containerRef.current.clientWidth;
+      const height = containerRef.current.clientHeight;
+      
+      cameraRef.current.aspect = width / height;
+      cameraRef.current.updateProjectionMatrix();
+      
+      rendererRef.current.setSize(width, height);
+    };
     
-    // Création du renderer
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(containerRef.current.clientWidth, containerRef.current.clientHeight);
-    renderer.setPixelRatio(window.devicePixelRatio);
-    renderer.shadowMap.enabled = displayOptions.showShadows;
-    containerRef.current.appendChild(renderer.domElement);
-    rendererRef.current = renderer;
-    
-    // Contrôles de caméra
-    const controls = new OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.25;
-    controls.minDistance = 1;
-    controls.maxDistance = 100;
-    controls.maxPolarAngle = Math.PI / 2;
-    controlsRef.current = controls;
-    
-    // Éclairage
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-    scene.add(ambientLight);
-    
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
-    directionalLight.position.set(5, 10, 7.5);
-    directionalLight.castShadow = displayOptions.showShadows;
-    scene.add(directionalLight);
-    
-    // Grid et axes
-    if (displayOptions.showGrid) {
-      const gridHelper = new THREE.GridHelper(
-        20, 
-        20, 
-        0x888888, 
-        0xcccccc
-      );
-      scene.add(gridHelper);
-    }
-    
-    if (displayOptions.showAxes) {
-      const axesHelper = new THREE.AxesHelper(5);
-      scene.add(axesHelper);
-    }
-    
-    // Animation loop
+    // Boucle d'animation
     const animate = () => {
-      requestAnimationFrame(animate);
+      requestRef.current = requestAnimationFrame(animate);
       
       if (controlsRef.current) {
         controlsRef.current.update();
@@ -95,413 +152,237 @@ const Scene3D = () => {
       }
     };
     
-    animate();
-    
-    // Gestion du redimensionnement
-    const handleResize = () => {
-      if (
-        containerRef.current && 
-        cameraRef.current && 
-        rendererRef.current
-      ) {
-        const width = containerRef.current.clientWidth;
-        const height = containerRef.current.clientHeight;
-        
-        cameraRef.current.aspect = width / height;
-        cameraRef.current.updateProjectionMatrix();
-        
-        rendererRef.current.setSize(width, height);
-      }
-    };
-    
+    // Initialiser la scène et démarrer l'animation
+    initThreeJS();
     window.addEventListener('resize', handleResize);
+    requestRef.current = requestAnimationFrame(animate);
     
-    // Nettoyage
+    // Nettoyage lors du démontage du composant
     return () => {
       window.removeEventListener('resize', handleResize);
       
-      if (containerRef.current && rendererRef.current) {
-        containerRef.current.removeChild(rendererRef.current.domElement);
+      if (requestRef.current) {
+        cancelAnimationFrame(requestRef.current);
       }
       
-      // Nettoyage des objets Three.js
-      if (sceneRef.current) {
-        sceneRef.current.traverse((object) => {
-          if (object.geometry) {
-            object.geometry.dispose();
-          }
-          
-          if (object.material) {
-            if (Array.isArray(object.material)) {
-              object.material.forEach((material) => material.dispose());
-            } else {
-              object.material.dispose();
-            }
-          }
-        });
+      if (rendererRef.current && containerRef.current) {
+        containerRef.current.removeChild(rendererRef.current.domElement);
+        rendererRef.current.dispose();
       }
     };
-  }, [cameraPosition, displayOptions]);
+  }, []);
   
-  // Fonction pour créer un mesh sans rotation
-  const createMeshForObject = (obj, applyRotation = true) => {
-    let mesh;
+  // Surveiller les changements de dimensions et mettre à jour le meuble
+  useEffect(() => {
+    if (!isInitialized || !furnitureStore) return;
     
-    // Récupération de l'opacité globale du meuble (si définie)
-    const furnitureOpacity = displayOptions.furnitureOpacity !== undefined 
-      ? displayOptions.furnitureOpacity 
-      : 1.0;
-      
-    // Opacité spécifique à la pièce (prioritaire si définie)
-    const pieceOpacity = obj.piece && obj.piece.opacity !== undefined 
-      ? obj.piece.opacity 
-      : furnitureOpacity;
+    // Récréer le meuble quand les dimensions changent
+    createFurniture();
     
-    // Transparence activée si opacité < 1
-    const isTransparent = pieceOpacity < 1.0;
-    
-    switch (obj.type) {
-      case 'floor':
-      case 'ceiling':
-        // Plan pour le sol et le plafond
-        const planeGeometry = new THREE.PlaneGeometry(
-          obj.dimensions.width,
-          obj.dimensions.height
-        );
-        
-        const planeMaterial = new THREE.MeshStandardMaterial({
-          color: obj.color,
-          side: THREE.DoubleSide
-        });
-        
-        mesh = new THREE.Mesh(planeGeometry, planeMaterial);
-        mesh.position.set(...obj.position);
-        if (applyRotation) {
-          mesh.rotation.set(...obj.rotation);
-        }
-        break;
-        
-      case 'wall':
-        // Box pour les murs
-        const wallGeometry = new THREE.BoxGeometry(
-          obj.dimensions.width,
-          obj.dimensions.height,
-          obj.dimensions.depth
-        );
-        
-        const wallMaterial = new THREE.MeshStandardMaterial({
-          color: obj.color,
-          transparent: true,
-          opacity: 0.85
-        });
-        
-        mesh = new THREE.Mesh(wallGeometry, wallMaterial);
-        mesh.position.set(...obj.position);
-        if (applyRotation) {
-          mesh.rotation.set(...obj.rotation);
-        }
-        break;
-        
-      case 'piece':
-        // Pour les pièces du meuble
-        const pieceGeometry = new THREE.BoxGeometry(1, 1, 1);
-        const pieceMaterial = new THREE.MeshStandardMaterial({
-          color: 0xcccccc,
-          transparent: isTransparent,
-          opacity: pieceOpacity,
-          // Configuration améliorée pour la transparence
-          depthWrite: !isTransparent,
-          side: isTransparent ? THREE.DoubleSide : THREE.FrontSide
-        });
-        
-        mesh = new THREE.Mesh(pieceGeometry, pieceMaterial);
-        mesh.position.set(...obj.position);
-        
-        if (applyRotation && obj.rotation) {
-          mesh.rotation.set(...obj.rotation);
-        }
-        
-        if (obj.dimensions) {
-          mesh.scale.set(
-            obj.dimensions.width,
-            obj.dimensions.height,
-            obj.dimensions.depth
-          );
-        }
-        break;
-        
-      case 'rod':
-        // Pour les tringles
-        const rodGeometry = new THREE.CylinderGeometry(
-          obj.dimensions.height / 2,
-          obj.dimensions.height / 2,
-          obj.dimensions.width,
-          32
-        );
-        const rodMaterial = new THREE.MeshStandardMaterial({
-          color: 0xCCCCCC,
-          metalness: 0.7,
-          roughness: 0.2,
-          transparent: isTransparent,
-          opacity: pieceOpacity
-        });
-        
-        mesh = new THREE.Mesh(rodGeometry, rodMaterial);
-        mesh.position.set(...obj.position);
-        // Rotation pour que le cylindre soit horizontal
-        mesh.rotation.set(0, 0, Math.PI / 2);
-        if (applyRotation && obj.rotation) {
-          const rotation = new THREE.Euler(...obj.rotation);
-          mesh.rotation.x += rotation.x;
-          mesh.rotation.y += rotation.y;
-          mesh.rotation.z += rotation.z;
-        }
-        break;
-        
-      case 'door':
-        // Pour les portes
-        const doorGeometry = new THREE.BoxGeometry(1, 1, 1);
-        const doorMaterial = new THREE.MeshStandardMaterial({
-          color: 0xAAAAAA,
-          transparent: isTransparent,
-          opacity: pieceOpacity
-        });
-        
-        mesh = new THREE.Mesh(doorGeometry, doorMaterial);
-        mesh.position.set(...obj.position);
-        if (applyRotation && obj.rotation) {
-          mesh.rotation.set(...obj.rotation);
-        }
-        
-        if (obj.dimensions) {
-          mesh.scale.set(
-            obj.dimensions.width,
-            obj.dimensions.height,
-            obj.dimensions.depth
-          );
-        }
-        break;
-        
-      default:
-        return null;
+    // Pour les vues prédéfinies, adapter la caméra
+    if (furnitureStore.currentView) {
+      changeView(furnitureStore.currentView);
     }
     
-    // Ajouter ID et propriétés pour la sélection
-    if (mesh) {
-      mesh.userData.id = obj.id;
-      mesh.userData.type = obj.type;
-      
-      // Stocker des informations supplémentaires pour la transparence
-      mesh.userData.pieceOpacity = pieceOpacity;
-      mesh.userData.isTransparent = isTransparent;
+    // Pour la grille, mettre à jour la visibilité
+    if (gridRef.current && furnitureStore.showGrid !== undefined) {
+      gridRef.current.visible = furnitureStore.showGrid;
     }
     
-    return mesh;
+  }, [
+    isInitialized, 
+    furnitureStore?.width, 
+    furnitureStore?.height, 
+    furnitureStore?.depth,
+    furnitureStore?.currentView,
+    furnitureStore?.displayMode,
+    furnitureStore?.showGrid
+  ]);
+
+  // Créer un meuble avec les dimensions du store
+  const createFurniture = () => {
+    if (!sceneRef.current || !furnitureStore) return;
+    
+    // Supprimer l'ancien meuble s'il existe
+    if (furnitureRef.current) {
+      sceneRef.current.remove(furnitureRef.current);
+    }
+    
+    // Récupérer les dimensions du store (mm)
+    const width = furnitureStore.width || 1000;
+    const height = furnitureStore.height || 2000;
+    const depth = furnitureStore.depth || 600;
+    
+    // Créer un groupe pour contenir tous les éléments du meuble
+    const furnitureGroup = new THREE.Group();
+    
+    // Créer le corps principal (caisson)
+    const cabinetGeometry = new THREE.BoxGeometry(width, height, depth);
+    const cabinetMaterial = new THREE.MeshStandardMaterial({ 
+      color: furnitureStore.displayMode === 'realistic' ? 0x8B4513 : 0xB8860B, 
+      roughness: furnitureStore.displayMode === 'realistic' ? 0.7 : 0.9,
+      metalness: furnitureStore.displayMode === 'realistic' ? 0.1 : 0
+    });
+    const cabinet = new THREE.Mesh(cabinetGeometry, cabinetMaterial);
+    cabinet.position.y = height / 2; // Placer sur le sol
+    cabinet.castShadow = true;
+    cabinet.receiveShadow = true;
+    furnitureGroup.add(cabinet);
+    
+    // Si mode réaliste, ajouter plus de détails
+    if (furnitureStore.displayMode === 'realistic') {
+      // Ajouter des étagères
+      const shelfHeight = 20; // 20mm d'épaisseur
+      const shelfMaterial = new THREE.MeshStandardMaterial({ 
+        color: 0xa0522d, 
+        roughness: 0.6,
+        metalness: 0.2
+      });
+      
+      for (let i = 1; i <= 3; i++) {
+        const shelfGeometry = new THREE.BoxGeometry(width - 40, shelfHeight, depth - 40);
+        const shelf = new THREE.Mesh(shelfGeometry, shelfMaterial);
+        shelf.position.y = (height / 4) * i;
+        shelf.castShadow = true;
+        shelf.receiveShadow = true;
+        furnitureGroup.add(shelf);
+      }
+      
+      // Ajouter des portes
+      const doorWidth = width / 2 - 5; // Légèrement moins que la moitié pour l'espace
+      const doorDepth = 20; // Épaisseur de la porte
+      const doorMaterial = new THREE.MeshStandardMaterial({ 
+        color: 0xd2b48c, 
+        roughness: 0.5,
+        metalness: 0.1
+      });
+      
+      // Porte gauche
+      const leftDoorGeometry = new THREE.BoxGeometry(doorWidth, height - 10, doorDepth);
+      const leftDoor = new THREE.Mesh(leftDoorGeometry, doorMaterial);
+      leftDoor.position.set(-width/4, height/2, depth/2 - doorDepth/2);
+      leftDoor.castShadow = true;
+      furnitureGroup.add(leftDoor);
+      
+      // Porte droite
+      const rightDoorGeometry = new THREE.BoxGeometry(doorWidth, height - 10, doorDepth);
+      const rightDoor = new THREE.Mesh(rightDoorGeometry, doorMaterial);
+      rightDoor.position.set(width/4, height/2, depth/2 - doorDepth/2);
+      rightDoor.castShadow = true;
+      furnitureGroup.add(rightDoor);
+      
+      // Ajouter des poignées
+      const handleGeometry = new THREE.CylinderGeometry(5, 5, 30, 16);
+      const handleMaterial = new THREE.MeshStandardMaterial({ 
+        color: 0xc0c0c0, 
+        roughness: 0.2,
+        metalness: 0.8
+      });
+      
+      // Poignée gauche
+      const leftHandle = new THREE.Mesh(handleGeometry, handleMaterial);
+      leftHandle.rotation.z = Math.PI / 2; // Rotation pour orientation horizontale
+      leftHandle.position.set(-width/4 + doorWidth/2 - 20, height/2, depth/2 + 15);
+      leftHandle.castShadow = true;
+      furnitureGroup.add(leftHandle);
+      
+      // Poignée droite
+      const rightHandle = new THREE.Mesh(handleGeometry, handleMaterial);
+      rightHandle.rotation.z = Math.PI / 2; // Rotation pour orientation horizontale
+      rightHandle.position.set(width/4 - doorWidth/2 + 20, height/2, depth/2 + 15);
+      rightHandle.castShadow = true;
+      furnitureGroup.add(rightHandle);
+    }
+    
+    // Ajouter le meuble à la scène
+    sceneRef.current.add(furnitureGroup);
+    furnitureRef.current = furnitureGroup;
+    
+    // Centrer la caméra sur le meuble
+    centerCameraOnFurniture();
   };
   
-  // Mise à jour des objets de la scène
-  useEffect(() => {
-    if (!sceneRef.current) return;
+  // Fonction pour changer de vue
+  const changeView = (viewName) => {
+    if (!cameraRef.current || !controlsRef.current || !furnitureRef.current) return;
     
-    // Supprimer les anciens objets
-    Object.keys(objectsRef.current).forEach(key => {
-      const obj = objectsRef.current[key];
-      if (obj && sceneRef.current) {
-        sceneRef.current.remove(obj);
-      }
-      
-      if (obj && obj.geometry) {
-        obj.geometry.dispose();
-      }
-      
-      if (obj && obj.material) {
-        if (Array.isArray(obj.material)) {
-          obj.material.forEach(material => material.dispose());
-        } else {
-          obj.material.dispose();
-        }
-      }
-    });
+    // Calculer la boîte englobante du meuble
+    const box = new THREE.Box3().setFromObject(furnitureRef.current);
+    const center = box.getCenter(new THREE.Vector3());
+    const size = box.getSize(new THREE.Vector3());
     
-    // Réinitialiser la référence des objets
-    objectsRef.current = {};
+    // Distance de caméra basée sur la taille du meuble
+    const maxDim = Math.max(size.x, size.y, size.z);
+    const distance = maxDim * 1.5;
     
-    // Ajouter les nouveaux objets
-    sceneObjects.forEach(obj => {
-      // Traitement spécial pour les groupes de meuble
-      if (obj.type === 'furnitureGroup') {
-        // Créer un groupe pour le meuble
-        const group = new THREE.Group();
-        group.position.set(...obj.position);
-        group.rotation.set(...obj.rotation);
-        
-        // Ajouter toutes les pièces du meuble au groupe
-        obj.children.forEach(childObj => {
-          let childMesh = createMeshForObject(childObj, false);
-          if (childMesh) {
-            // Stocker l'ID original du childMesh pour la sélection
-            const originalId = childMesh.userData.id;
-            
-            group.add(childMesh);
-            
-            // Mettre à jour les références pour inclure les enfants
-            objectsRef.current[originalId] = childMesh;
-          }
-        });
-        
-        // Ajouter le groupe à la scène et aux références
-        group.userData.id = obj.id;
-        group.userData.type = obj.type;
-        sceneRef.current.add(group);
-        objectsRef.current[obj.id] = group;
-      } else {
-        // Traitement normal pour les autres types d'objets
-        let mesh = createMeshForObject(obj);
-        
-        if (mesh) {
-          // Ajouter à la scène et aux références
-          sceneRef.current.add(mesh);
-          objectsRef.current[obj.id] = mesh;
-        }
-      }
-    });
-    
-  }, [sceneObjects, displayOptions]);
-  
-  // Mise à jour de la position de la caméra
-  useEffect(() => {
-    if (cameraRef.current) {
-      cameraRef.current.position.set(...cameraPosition);
-    }
-  }, [cameraPosition]);
-  
-  // Mise à jour de la sélection
-  useEffect(() => {
-    Object.keys(objectsRef.current).forEach(key => {
-      const obj = objectsRef.current[key];
-      if (obj) {
-        // Réinitialiser le matériau
-        if (obj.type === 'furnitureGroup') {
-          // Pour les groupes, parcourir les enfants
-          obj.children.forEach(child => {
-            if (child.material) {
-              if (Array.isArray(child.material)) {
-                child.material.forEach(material => {
-                  material.emissive = new THREE.Color(0x000000);
-                });
-              } else {
-                child.material.emissive = new THREE.Color(0x000000);
-              }
-            }
-          });
-        } else if (obj.material) {
-          // Pour les objets simples
-          if (Array.isArray(obj.material)) {
-            obj.material.forEach(material => {
-              material.emissive = new THREE.Color(0x000000);
-            });
-          } else {
-            obj.material.emissive = new THREE.Color(0x000000);
-          }
-        }
-      }
-    });
-    
-    // Mettre en surbrillance l'objet sélectionné
-    if (selectedObjectId && objectsRef.current[selectedObjectId]) {
-      const obj = objectsRef.current[selectedObjectId];
-      
-      if (obj.type === 'furnitureGroup') {
-        // Pour les groupes, mettre en surbrillance tous les enfants
-        obj.children.forEach(child => {
-          if (child.material) {
-            if (Array.isArray(child.material)) {
-              child.material.forEach(material => {
-                material.emissive = new THREE.Color(0x333333);
-              });
-            } else {
-              child.material.emissive = new THREE.Color(0x333333);
-            }
-          }
-        });
-      } else if (obj.material) {
-        // Pour les objets simples
-        if (Array.isArray(obj.material)) {
-          obj.material.forEach(material => {
-            material.emissive = new THREE.Color(0x333333);
-          });
-        } else {
-          obj.material.emissive = new THREE.Color(0x333333);
-        }
-      }
-    }
-  }, [selectedObjectId]);
-  
-  // Gestion des clics pour la sélection
-  useEffect(() => {
-    if (!containerRef.current || !sceneRef.current || !cameraRef.current) {
-      return;
+    // Définir les positions de caméra pour chaque vue
+    switch (viewName) {
+      case 'front':
+        cameraRef.current.position.set(center.x, center.y, center.z + distance);
+        break;
+      case 'back':
+        cameraRef.current.position.set(center.x, center.y, center.z - distance);
+        break;
+      case 'left':
+        cameraRef.current.position.set(center.x - distance, center.y, center.z);
+        break;
+      case 'right':
+        cameraRef.current.position.set(center.x + distance, center.y, center.z);
+        break;
+      case 'top':
+        cameraRef.current.position.set(center.x, center.y + distance, center.z);
+        break;
+      case 'bottom':
+        cameraRef.current.position.set(center.x, center.y - distance, center.z);
+        break;
+      case 'home':
+      default:
+        cameraRef.current.position.set(
+          center.x + distance,
+          center.y + distance,
+          center.z + distance
+        );
+        break;
     }
     
-    const raycaster = new THREE.Raycaster();
-    const mouse = new THREE.Vector2();
-    
-    const handleClick = (event) => {
-      // Calculer la position de la souris
-      const rect = containerRef.current.getBoundingClientRect();
-      mouse.x = ((event.clientX - rect.left) / containerRef.current.clientWidth) * 2 - 1;
-      mouse.y = -((event.clientY - rect.top) / containerRef.current.clientHeight) * 2 + 1;
-      
-      // Lancer un rayon
-      raycaster.setFromCamera(mouse, cameraRef.current);
-      
-      // Obtenir les intersections
-      const intersects = raycaster.intersectObjects(sceneRef.current.children, true);
-      
-      if (intersects.length > 0) {
-        const selected = intersects[0].object;
-        let selectId = null;
-        
-        // Vérifier si l'objet a un ID utilisateur
-        if (selected.userData && selected.userData.id) {
-          selectId = selected.userData.id;
-        } else {
-          // Chercher dans les parents
-          let parent = selected.parent;
-          while(parent && !selectId) {
-            if (parent.userData && parent.userData.id) {
-              selectId = parent.userData.id;
-            }
-            parent = parent.parent;
-          }
-        }
-        
-        if (selectId) {
-          setSelectedObjectId(selectId);
-        }
-      } else {
-        setSelectedObjectId(null);
-      }
-    };
-    
-    containerRef.current.addEventListener('click', handleClick);
-    
-    return () => {
-      if (containerRef.current) {
-        containerRef.current.removeEventListener('click', handleClick);
-      }
-    };
-  }, [setSelectedObjectId]);
+    // Définir le point de vue
+    controlsRef.current.target.copy(center);
+    controlsRef.current.update();
+  };
   
+  // Centrer la caméra sur le meuble
+  const centerCameraOnFurniture = () => {
+    if (!furnitureRef.current || !cameraRef.current || !controlsRef.current) return;
+    
+    // Calculer la boîte englobante du meuble
+    const box = new THREE.Box3().setFromObject(furnitureRef.current);
+    const center = box.getCenter(new THREE.Vector3());
+    const size = box.getSize(new THREE.Vector3());
+    
+    // Définir la distance de caméra en fonction de la taille du meuble
+    const maxDim = Math.max(size.x, size.y, size.z);
+    const distance = maxDim * 2.5;
+    
+    // Positionner la caméra
+    cameraRef.current.position.set(
+      center.x + distance,
+      center.y + distance,
+      center.z + distance
+    );
+    
+    // Définir le point de vue
+    controlsRef.current.target.copy(center);
+    controlsRef.current.update();
+  };
+
   return (
     <div 
       ref={containerRef} 
       style={{ 
         width: '100%', 
         height: '100%', 
-        position: 'absolute',
-        top: 0,
-        left: 0
+        position: 'relative',
+        overflow: 'hidden'
       }}
     />
   );
