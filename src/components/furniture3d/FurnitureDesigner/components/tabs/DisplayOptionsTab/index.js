@@ -2,210 +2,256 @@
 import React from 'react';
 import {
   Box,
-  Grid,
   Typography,
-  FormControlLabel,
-  Checkbox,
-  Divider,
-  Paper,
-  Slider,
-  MenuItem,
-  Select,
   FormControl,
   InputLabel,
-  Button
+  Select,
+  MenuItem,
+  Slider,
+  Switch,
+  FormControlLabel,
+  Button,
 } from '@mui/material';
+import Grid from '@mui/material/Grid';
 import { useFurnitureStore } from '../../../store';
 
 const DisplayOptionsTab = () => {
   const {
     displayOptions,
     setDisplayOption,
+    setCameraPosition,
+    furniture,
     regenerateScene
   } = useFurnitureStore();
 
-  // Liste des couleurs de fond disponibles
-  const backgroundColors = [
-    { value: '#F0F0F0', label: 'Gris clair' },
-    { value: '#FFFFFF', label: 'Blanc' },
-    { value: '#E0E0E0', label: 'Gris' },
-    { value: '#D0D0D0', label: 'Gris foncé' },
-    { value: '#000000', label: 'Noir' },
-    { value: '#E6F7FF', label: 'Bleu ciel' },
-  ];
+  // Changement du mode d'affichage (Solide, Filaire, Réaliste)
+  const handleViewModeChange = (event) => {
+    console.log("Changement du mode d'affichage:", event.target.value);
+    setDisplayOption('viewMode', event.target.value, true);
+  };
 
-  // Liste des modes d'affichage
-  const viewModes = [
-    { value: 'solid', label: 'Solide' },
-    { value: 'wireframe', label: 'Fil de fer' },
-    { value: 'realistic', label: 'Réaliste' }
-  ];
-
-  // Gestion du changement d'opacité
+  // Changement de l'opacité du meuble
   const handleOpacityChange = (event, newValue) => {
-    setDisplayOption('furnitureOpacity', newValue / 100);
+    console.log("Changement de l'opacité du meuble:", newValue / 100);
+    setDisplayOption('furnitureOpacity', newValue / 100, true);
+  };
+
+  // Changement des options d'affichage (Grid, Axes, etc.)
+  const handleSwitchChange = (option) => (event) => {
+    console.log(`Changement de l'option ${option}:`, event.target.checked);
+    setDisplayOption(option, event.target.checked, true);
+  };
+
+  // Calcul de la distance optimale de la caméra
+  const calculateCameraDistance = (furniture) => {
+    if (!furniture || !furniture.dimensions) return 3;
+    
+    const maxDim = Math.max(
+      furniture.dimensions.width / 100,
+      furniture.dimensions.height / 100,
+      furniture.dimensions.depth / 100
+    );
+    
+    return Math.max(maxDim * 2, 3); // minimum 3 unités
+  };
+
+  // Définir une vue de caméra
+  const setCameraView = (position) => {
+    setCameraPosition(position);
+    regenerateScene();
+  };
+
+  // Centrer la vue sur le meuble
+  const handleCenterView = () => {
+    const distance = calculateCameraDistance(furniture);
+    setCameraView([distance, distance, distance]);
   };
 
   return (
-    <Paper elevation={0} sx={{ p: 2 }}>
-      <Typography variant="h6" gutterBottom>Options d'affichage</Typography>
+    <div className="tab-content">
+      <Typography variant="h6" gutterBottom>
+        Options d'affichage
+      </Typography>
+      
+      {/* Section Vues prédéfinies */}
+      <div className="section">
+        <div className="section-header">
+          <Typography variant="h6">Vues prédéfinies</Typography>
+        </div>
+        <div className="section-content">
+          <Grid container spacing={2}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <Button 
+                variant="outlined"
+                fullWidth
+                className="view-button"
+                onClick={() => {
+                  const maxDim = Math.max(
+                    furniture.dimensions.width / 100,
+                    furniture.dimensions.height / 100,
+                    furniture.dimensions.depth / 100
+                  );
+                  setCameraView([0, maxDim * 2, 0]);
+                }}
+              >
+                Vue de dessus
+              </Button>
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <Button 
+                variant="outlined"
+                fullWidth
+                className="view-button"
+                onClick={() => {
+                  const maxDim = Math.max(
+                    furniture.dimensions.width / 100,
+                    furniture.dimensions.height / 100,
+                    furniture.dimensions.depth / 100
+                  );
+                  setCameraView([0, furniture.dimensions.height / 200, maxDim * 2]);
+                }}
+              >
+                Vue de face
+              </Button>
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <Button 
+                variant="outlined"
+                fullWidth
+                className="view-button"
+                onClick={() => {
+                  const maxDim = Math.max(
+                    furniture.dimensions.width / 100,
+                    furniture.dimensions.height / 100,
+                    furniture.dimensions.depth / 100
+                  );
+                  setCameraView([maxDim * 2, furniture.dimensions.height / 200, 0]);
+                }}
+              >
+                Vue de côté
+              </Button>
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <Button 
+                variant="outlined"
+                fullWidth
+                className="view-button"
+                onClick={() => {
+                  const maxDim = Math.max(
+                    furniture.dimensions.width / 100,
+                    furniture.dimensions.height / 100,
+                    furniture.dimensions.depth / 100
+                  );
+                  const distance = maxDim * 2.5;
+                  setCameraView([distance, distance, distance]);
+                }}
+              >
+                Vue isométrique
+              </Button>
+            </Grid>
+          </Grid>
+          <Box sx={{ mt: 2 }}>
+            <Button 
+              variant="contained" 
+              color="primary"
+              fullWidth
+              onClick={handleCenterView}
+            >
+              Centrer sur le meuble
+            </Button>
+          </Box>
+        </div>
+      </div>
 
-      {/* Mode d'affichage */}
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="subtitle1" gutterBottom>Mode d'affichage</Typography>
-        <FormControl fullWidth>
-          <InputLabel>Mode</InputLabel>
-          <Select
-            value={displayOptions.viewMode || 'solid'}
-            onChange={(e) => setDisplayOption('viewMode', e.target.value)}
-            label="Mode"
-          >
-            {viewModes.map((mode) => (
-              <MenuItem key={mode.value} value={mode.value}>
-                {mode.label}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-      </Box>
+      {/* Section Mode d'affichage */}
+      <div className="section">
+        <div className="section-header">
+          <Typography variant="h6">Mode d'affichage</Typography>
+        </div>
+        <div className="section-content">
+          <FormControl fullWidth sx={{ mb: 2 }}>
+            <InputLabel>Style de rendu</InputLabel>
+            <Select
+              value={displayOptions.viewMode || 'solid'}
+              label="Style de rendu"
+              onChange={handleViewModeChange}
+            >
+              <MenuItem value="solid">Solide</MenuItem>
+              <MenuItem value="wireframe">Filaire</MenuItem>
+              <MenuItem value="realistic">Réaliste</MenuItem>
+            </Select>
+          </FormControl>
 
-      <Divider sx={{ my: 2 }} />
-
-      {/* Opacité du meuble - Nouvelle option */}
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="subtitle1" gutterBottom>Opacité du meuble</Typography>
-        <Box sx={{ px: 1 }}>
+          <Typography gutterBottom>
+            Opacité du meuble: {Math.round((displayOptions.furnitureOpacity || 1) * 100)}%
+          </Typography>
           <Slider
             value={(displayOptions.furnitureOpacity || 1) * 100}
             onChange={handleOpacityChange}
-            aria-labelledby="opacity-slider"
-            valueLabelDisplay="auto"
-            step={5}
-            marks={[
-              { value: 20, label: '20%' },
-              { value: 50, label: '50%' },
-              { value: 100, label: '100%' }
-            ]}
-            min={20}
+            min={30}
             max={100}
+            valueLabelDisplay="auto"
           />
-        </Box>
-        <Typography variant="caption" color="text.secondary">
-          Ajustez l'opacité pour voir l'intérieur du meuble
-        </Typography>
-      </Box>
+        </div>
+      </div>
 
-      <Divider sx={{ my: 2 }} />
+      {/* Section Environnement */}
+      <div className="section">
+        <div className="section-header">
+          <Typography variant="h6">Environnement</Typography>
+        </div>
+        <div className="section-content">
+          <FormControlLabel
+            control={
+              <Switch
+                checked={displayOptions.showGrid !== false}
+                onChange={handleSwitchChange('showGrid')}
+              />
+            }
+            label="Afficher la grille"
+          />
+          <FormControlLabel
+            control={
+              <Switch
+                checked={displayOptions.showAxes !== false}
+                onChange={handleSwitchChange('showAxes')}
+              />
+            }
+            label="Afficher les axes"
+          />
+          <FormControlLabel
+            control={
+              <Switch
+                checked={displayOptions.showDimensions !== false}
+                onChange={handleSwitchChange('showDimensions')}
+              />
+            }
+            label="Afficher les dimensions"
+          />
+          <FormControlLabel
+            control={
+              <Switch
+                checked={displayOptions.showShadows === true}
+                onChange={handleSwitchChange('showShadows')}
+              />
+            }
+            label="Ombres"
+          />
+        </div>
+      </div>
 
-      {/* Options d'éléments à afficher */}
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="subtitle1" gutterBottom>Éléments à afficher</Typography>
-        <Grid container spacing={2}>
-          <Grid item xs={12} sm={6}>
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={displayOptions.showGrid || false}
-                  onChange={(e) => setDisplayOption('showGrid', e.target.checked)}
-                />
-              }
-              label="Afficher la grille"
-            />
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={displayOptions.showAxes || false}
-                  onChange={(e) => setDisplayOption('showAxes', e.target.checked)}
-                />
-              }
-              label="Afficher les axes"
-            />
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={displayOptions.showDimensions || false}
-                  onChange={(e) => setDisplayOption('showDimensions', e.target.checked)}
-                />
-              }
-              label="Afficher les dimensions"
-            />
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={displayOptions.showShadows || false}
-                  onChange={(e) => setDisplayOption('showShadows', e.target.checked)}
-                />
-              }
-              label="Afficher les ombres"
-            />
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={displayOptions.showWireframe || false}
-                  onChange={(e) => setDisplayOption('showWireframe', e.target.checked)}
-                />
-              }
-              label="Afficher le fil de fer"
-            />
-          </Grid>
-        </Grid>
-      </Box>
-
-      <Divider sx={{ my: 2 }} />
-
-      {/* Couleur d'arrière-plan */}
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="subtitle1" gutterBottom>Couleur d'arrière-plan</Typography>
-        <FormControl fullWidth>
-          <InputLabel>Couleur de fond</InputLabel>
-          <Select
-            value={displayOptions.backgroundColor || '#F0F0F0'}
-            onChange={(e) => setDisplayOption('backgroundColor', e.target.value)}
-            label="Couleur de fond"
-          >
-            {backgroundColors.map((color) => (
-              <MenuItem 
-                key={color.value} 
-                value={color.value}
-                sx={{ 
-                  display: 'flex',
-                  alignItems: 'center'
-                }}
-              >
-                <Box 
-                  sx={{ 
-                    width: 20, 
-                    height: 20, 
-                    bgcolor: color.value,
-                    mr: 1,
-                    border: '1px solid #ccc'
-                  }} 
-                />
-                {color.label}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-      </Box>
-
-      <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center' }}>
-        <Button
-          variant="contained"
+      {/* Bouton d'actualisation */}
+      <Box sx={{ mt: 2 }}>
+        <Button 
+          variant="contained" 
           color="primary"
-          onClick={() => regenerateScene()}
+          fullWidth
+          onClick={regenerateScene}
         >
-          Appliquer les changements
+          Actualiser l'affichage
         </Button>
       </Box>
-    </Paper>
+    </div>
   );
 };
 

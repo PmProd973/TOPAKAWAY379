@@ -28,7 +28,8 @@ import {
   DeleteOutline as DeleteIcon,
   ContentCopy as DuplicateIcon,
   Share as ShareIcon,
-  Cancel as CancelIcon
+  Cancel as CancelIcon,
+  OpenInNew as OpenInNewIcon
 } from '@mui/icons-material';
 import { 
   doc, 
@@ -58,7 +59,7 @@ const MaterialsTab = ({ projectId, materials }) => {
       {materials && materials.length > 0 ? (
         <Grid container spacing={2}>
           {materials.map((material, index) => (
-            <Grid item xs={12} sm={6} md={4} key={index}>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }} key={index}>
               <Paper sx={{ p: 2 }}>
                 <Typography variant="subtitle1">{material.description}</Typography>
                 <Typography variant="body2" color="text.secondary">
@@ -94,7 +95,7 @@ const ReportsTab = ({ projectId, optimizationResult }) => {
         </Typography>
       ) : (
         <Grid container spacing={3}>
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Paper sx={{ p: 2 }}>
               <Typography variant="subtitle1" gutterBottom>Résumé du projet</Typography>
               <Typography variant="body2">
@@ -109,7 +110,7 @@ const ReportsTab = ({ projectId, optimizationResult }) => {
             </Paper>
           </Grid>
           
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Paper sx={{ p: 2 }}>
               <Typography variant="subtitle1" gutterBottom>Statistiques d'optimisation</Typography>
               <Typography variant="body2">
@@ -124,7 +125,7 @@ const ReportsTab = ({ projectId, optimizationResult }) => {
             </Paper>
           </Grid>
           
-          <Grid item xs={12}>
+          <Grid size={12}>
             <Paper sx={{ p: 2 }}>
               <Typography variant="subtitle1" gutterBottom>Détail des coûts</Typography>
               <Typography variant="body2" paragraph>
@@ -210,6 +211,20 @@ export default function ProjectDetail() {
 
     fetchProjectData();
   }, [projectId, navigate]);
+
+  // Nouvelle fonction pour ouvrir le concepteur 3D dans une fenêtre popup
+  const openFurnitureDesignerPopup = () => {
+    const width = window.screen.width * 0.9;
+    const height = window.screen.height * 0.9;
+    const left = (window.screen.width - width) / 2;
+    const top = (window.screen.height - height) / 2;
+    
+    window.open(
+      `/furniture-designer-popup?projectId=${projectId}`,
+      'furnitureDesigner',
+      `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes,status=yes,menubar=no`
+    );
+  };
 
   const handleTabChange = (event, newValue) => {
     setCurrentTab(newValue);
@@ -322,113 +337,115 @@ export default function ProjectDetail() {
       setLoading(false);
     }
   };
-// Fonction améliorée pour dupliquer un projet avec ses pièces
-const handleDuplicateProject = async () => {
-  if (!project) return;
   
-  try {
-    setLoading(true);
+  // Fonction améliorée pour dupliquer un projet avec ses pièces
+  const handleDuplicateProject = async () => {
+    if (!project) return;
     
-    // Créer un objet avec uniquement des champs valides
-    const projectData = {
-      name: `${project.name} (copie)`,
-      description: project.description || '',
-      status: 'draft',
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp()
-    };
-    
-    // N'ajouter ces champs que s'ils ont des valeurs définies
-    if (project.client) projectData.client = project.client;
-    if (project.clientName) projectData.clientName = project.clientName;
-    if (project.deadline) projectData.deadline = project.deadline;
-    if (project.notes) projectData.notes = project.notes;
-    if (project.category) projectData.category = project.category;
-    if (project.tags) projectData.tags = project.tags;
-    if (project.efficiency) projectData.efficiency = project.efficiency;
-    if (project.totalPieces) projectData.totalPieces = project.totalPieces;
-    if (project.completedPieces) projectData.completedPieces = project.completedPieces;
-    
-    // Ajouter le document à Firestore
-    const newProjectRef = await addDoc(collection(db, 'projects'), projectData);
-    const newProjectId = newProjectRef.id;
-    
-    // Récupérer et dupliquer les pièces du projet original
     try {
-      const piecesRef = collection(db, 'project_pieces', projectId, 'pieces');
-      const piecesSnapshot = await getDocs(piecesRef);
+      setLoading(true);
       
-      if (!piecesSnapshot.empty) {
-        // Créer un batch pour les opérations multiples
-        const batch = writeBatch(db);
+      // Créer un objet avec uniquement des champs valides
+      const projectData = {
+        name: `${project.name} (copie)`,
+        description: project.description || '',
+        status: 'draft',
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      };
+      
+      // N'ajouter ces champs que s'ils ont des valeurs définies
+      if (project.client) projectData.client = project.client;
+      if (project.clientName) projectData.clientName = project.clientName;
+      if (project.deadline) projectData.deadline = project.deadline;
+      if (project.notes) projectData.notes = project.notes;
+      if (project.category) projectData.category = project.category;
+      if (project.tags) projectData.tags = project.tags;
+      if (project.efficiency) projectData.efficiency = project.efficiency;
+      if (project.totalPieces) projectData.totalPieces = project.totalPieces;
+      if (project.completedPieces) projectData.completedPieces = project.completedPieces;
+      
+      // Ajouter le document à Firestore
+      const newProjectRef = await addDoc(collection(db, 'projects'), projectData);
+      const newProjectId = newProjectRef.id;
+      
+      // Récupérer et dupliquer les pièces du projet original
+      try {
+        const piecesRef = collection(db, 'project_pieces', projectId, 'pieces');
+        const piecesSnapshot = await getDocs(piecesRef);
         
-        // Dupliquer chaque pièce
-        piecesSnapshot.docs.forEach((pieceDoc) => {
-          const pieceData = pieceDoc.data();
-          const newPieceRef = doc(collection(db, 'project_pieces', newProjectId, 'pieces'));
+        if (!piecesSnapshot.empty) {
+          // Créer un batch pour les opérations multiples
+          const batch = writeBatch(db);
           
-          // Créer un nouvel objet pièce sans les champs undefined
-          const newPieceData = {};
-          
-          // Filtrer les champs undefined
-          Object.keys(pieceData).forEach(key => {
-            if (pieceData[key] !== undefined) {
-              newPieceData[key] = pieceData[key];
-            }
+          // Dupliquer chaque pièce
+          piecesSnapshot.docs.forEach((pieceDoc) => {
+            const pieceData = pieceDoc.data();
+            const newPieceRef = doc(collection(db, 'project_pieces', newProjectId, 'pieces'));
+            
+            // Créer un nouvel objet pièce sans les champs undefined
+            const newPieceData = {};
+            
+            // Filtrer les champs undefined
+            Object.keys(pieceData).forEach(key => {
+              if (pieceData[key] !== undefined) {
+                newPieceData[key] = pieceData[key];
+              }
+            });
+            
+            // Mettre à jour les timestamps
+            newPieceData.createdAt = serverTimestamp();
+            newPieceData.updatedAt = serverTimestamp();
+            
+            // Ajouter la pièce au batch
+            batch.set(newPieceRef, newPieceData);
           });
           
-          // Mettre à jour les timestamps
-          newPieceData.createdAt = serverTimestamp();
-          newPieceData.updatedAt = serverTimestamp();
+          // Exécuter le batch
+          await batch.commit();
           
-          // Ajouter la pièce au batch
-          batch.set(newPieceRef, newPieceData);
-        });
-        
-        // Exécuter le batch
-        await batch.commit();
-        
-        // Mettre à jour le nombre de pièces dans le projet
-        await updateDoc(newProjectRef, {
-          totalPieces: piecesSnapshot.size
-        });
-        
-        console.log(`${piecesSnapshot.size} pièces dupliquées avec succès`);
+          // Mettre à jour le nombre de pièces dans le projet
+          await updateDoc(newProjectRef, {
+            totalPieces: piecesSnapshot.size
+          });
+          
+          console.log(`${piecesSnapshot.size} pièces dupliquées avec succès`);
+        }
+      } catch (error) {
+        console.warn("Erreur lors de la duplication des pièces:", error);
+        // La duplication continue même si les pièces ne sont pas dupliquées
       }
+      
+      // Navigation vers le nouveau projet
+      navigate(`/projects/${newProjectId}`);
+      
+      // Afficher une notification de succès
+      setNotification({
+        show: true,
+        message: 'Projet et pièces dupliqués avec succès',
+        type: 'success'
+      });
+      
+      setTimeout(() => {
+        setNotification(prev => ({ ...prev, show: false }));
+      }, 3000);
     } catch (error) {
-      console.warn("Erreur lors de la duplication des pièces:", error);
-      // La duplication continue même si les pièces ne sont pas dupliquées
+      console.error('Erreur lors de la duplication du projet:', error);
+      
+      setNotification({
+        show: true,
+        message: `Erreur lors de la duplication: ${error.message}`,
+        type: 'error'
+      });
+      
+      setTimeout(() => {
+        setNotification(prev => ({ ...prev, show: false }));
+      }, 5000);
+    } finally {
+      setLoading(false);
     }
-    
-    // Navigation vers le nouveau projet
-    navigate(`/projects/${newProjectId}`);
-    
-    // Afficher une notification de succès
-    setNotification({
-      show: true,
-      message: 'Projet et pièces dupliqués avec succès',
-      type: 'success'
-    });
-    
-    setTimeout(() => {
-      setNotification(prev => ({ ...prev, show: false }));
-    }, 3000);
-  } catch (error) {
-    console.error('Erreur lors de la duplication du projet:', error);
-    
-    setNotification({
-      show: true,
-      message: `Erreur lors de la duplication: ${error.message}`,
-      type: 'error'
-    });
-    
-    setTimeout(() => {
-      setNotification(prev => ({ ...prev, show: false }));
-    }, 5000);
-  } finally {
-    setLoading(false);
-  }
-};
+  };
+  
   const handleShareProject = () => {
     // Logique pour partager le projet (pourrait être implémentée plus tard)
     setNotification({
@@ -599,6 +616,17 @@ const handleDuplicateProject = async () => {
           </Box>
           
           <Box>
+            {/* Bouton pour ouvrir la Conception 3D en popup */}
+            <Button 
+              variant="contained" 
+              color="primary"
+              startIcon={<OpenInNewIcon />}
+              onClick={openFurnitureDesignerPopup}
+              sx={{ mr: 1 }}
+            >
+              Conception 3D
+            </Button>
+            
             <Button 
               variant="contained" 
               startIcon={<SaveIcon />}
@@ -622,8 +650,8 @@ const handleDuplicateProject = async () => {
 
       {/* Informations du projet */}
       <Paper sx={{ mb: 3, p: 2 }}>
-        <Grid container spacing={2}>
-          <Grid item xs={12} md={6}>
+        <Grid container spacing={2} sx={{ width: '100%' }}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Typography variant="body2" color="text.secondary">
               <strong>Description:</strong> {project.description || 'Aucune description'}
             </Typography>
@@ -633,7 +661,7 @@ const handleDuplicateProject = async () => {
               </Typography>
             )}
           </Grid>
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Typography variant="body2" color="text.secondary">
               <strong>Créé le:</strong> {formatDate(project.createdAt)}
             </Typography>
@@ -658,8 +686,8 @@ const handleDuplicateProject = async () => {
             <Tab label="Pièces" />
             <Tab label="Matériaux" />
             <Tab label="Optimisation" />
-            <Tab label="Étiquettes" /> {/* Nouvel onglet */}
-            <Tab label="Conception 3D" /> {/* Nouvel onglet */}
+            <Tab label="Étiquettes" />
+            {/* Onglet Conception 3D supprimé */}
             <Tab label="Rapports" />
           </Tabs>
         </Box>
@@ -687,33 +715,19 @@ const handleDuplicateProject = async () => {
             />
           )}
           {currentTab === 3 && (
-  <LabelDesigner
-    projectId={projectId}
-    pieces={pieces}
-    materials={materials}
-    panels={optimizationResult?.panels || []}
-  />
-)}
-{currentTab === 4 && (
-  <ReportsTab
-    projectId={projectId}
-    optimizationResult={optimizationResult}
-  />
-)}
-
-{currentTab === 4 && (
-  <FurnitureDesigner
-    projectId={projectId}
-    pieces={pieces}
-    materials={materials}
-  />
-)}
-{currentTab === 5 && (
-  <ReportsTab
-    projectId={projectId}
-    optimizationResult={optimizationResult}
-  />
-)}
+            <LabelDesigner
+              projectId={projectId}
+              pieces={pieces}
+              materials={materials}
+              panels={optimizationResult?.panels || []}
+            />
+          )}
+          {currentTab === 4 && (
+            <ReportsTab
+              projectId={projectId}
+              optimizationResult={optimizationResult}
+            />
+          )}
         </Paper>
       </Box>
 
@@ -752,8 +766,8 @@ const handleDuplicateProject = async () => {
           Modifier le projet
         </DialogTitle>
         <DialogContent>
-          <Grid container spacing={2} sx={{ mt: 1 }}>
-            <Grid item xs={12}>
+          <Grid container spacing={2} sx={{ mt: 1, width: '100%' }}>
+            <Grid size={12}>
               <TextField
                 fullWidth
                 label="Nom du projet"
@@ -763,7 +777,7 @@ const handleDuplicateProject = async () => {
                 required
               />
             </Grid>
-            <Grid item xs={12}>
+            <Grid size={12}>
               <TextField
                 fullWidth
                 label="Nom du client"
@@ -772,7 +786,7 @@ const handleDuplicateProject = async () => {
                 onChange={handleEditFormChange}
               />
             </Grid>
-            <Grid item xs={12}>
+            <Grid size={12}>
               <TextField
                 fullWidth
                 label="Description"
@@ -783,7 +797,7 @@ const handleDuplicateProject = async () => {
                 rows={2}
               />
             </Grid>
-            <Grid item xs={12}>
+            <Grid size={12}>
               <TextField
                 fullWidth
                 label="Notes"

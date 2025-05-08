@@ -30,8 +30,7 @@ import {
   ViewList as ListIcon,
   Sell as TagIcon,
   LocalPrintshop as PrintIcon,
-  Style as StyleIcon,
-  ViewInAr as ViewInArIcon
+  Style as StyleIcon
 } from '@mui/icons-material';
 import { useProjects } from '../../contexts/ProjectContext';
 
@@ -163,12 +162,8 @@ const Sidebar = () => {
           text: 'Styles personnalisés',
           icon: <StyleIcon />,
           path: '/tools/custom-styles',
-        },
-        {
-          text: 'Conception 3D',
-          icon: <ViewInArIcon />,
-          path: '/conception-3d', // Chemin modifié vers la nouvelle page de conception 3D
         }
+        // L'entrée "Conception 3D" a été supprimée
       ],
     },
   ];

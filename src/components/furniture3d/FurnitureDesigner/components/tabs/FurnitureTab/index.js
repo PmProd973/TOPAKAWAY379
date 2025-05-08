@@ -2,7 +2,6 @@
 import React from 'react';
 import {
   Box,
-  Grid,
   Typography,
   TextField,
   FormControl,
@@ -20,6 +19,7 @@ import {
   AccordionSummary,
   AccordionDetails
 } from '@mui/material';
+import Grid from '@mui/material/Grid';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { useFurnitureStore } from '../../../store';
 
@@ -108,8 +108,8 @@ const FurnitureTab = () => {
       {/* Dimensions principales */}
       <Box sx={{ mb: 3 }}>
         <Typography variant="subtitle1" gutterBottom>Dimensions principales</Typography>
-        <Grid container spacing={2}>
-          <Grid item xs={12} sm={4}>
+        <Grid container spacing={2} sx={{ width: '100%' }}>
+          <Grid size={{ xs: 12, sm: 4 }}>
             <TextField
               fullWidth
               label="Largeur"
@@ -121,7 +121,7 @@ const FurnitureTab = () => {
               }}
             />
           </Grid>
-          <Grid item xs={12} sm={4}>
+          <Grid size={{ xs: 12, sm: 4 }}>
             <TextField
               fullWidth
               label="Hauteur"
@@ -133,7 +133,7 @@ const FurnitureTab = () => {
               }}
             />
           </Grid>
-          <Grid item xs={12} sm={4}>
+          <Grid size={{ xs: 12, sm: 4 }}>
             <TextField
               fullWidth
               label="Profondeur"
@@ -271,8 +271,8 @@ const FurnitureTab = () => {
       {/* Position du meuble */}
       <Box sx={{ mb: 3 }}>
         <Typography variant="subtitle1" gutterBottom>Position dans la pièce</Typography>
-        <Grid container spacing={2}>
-          <Grid item xs={12} sm={4}>
+        <Grid container spacing={2} sx={{ width: '100%' }}>
+          <Grid size={{ xs: 12, sm: 4 }}>
             <TextField
               fullWidth
               label="Position X"
@@ -284,7 +284,7 @@ const FurnitureTab = () => {
               }}
             />
           </Grid>
-          <Grid item xs={12} sm={4}>
+          <Grid size={{ xs: 12, sm: 4 }}>
             <TextField
               fullWidth
               label="Position Y"
@@ -296,7 +296,7 @@ const FurnitureTab = () => {
               }}
             />
           </Grid>
-          <Grid item xs={12} sm={4}>
+          <Grid size={{ xs: 12, sm: 4 }}>
             <TextField
               fullWidth
               label="Position Z"
@@ -316,8 +316,8 @@ const FurnitureTab = () => {
       {/* Options de construction */}
       <Box sx={{ mb: 3 }}>
         <Typography variant="subtitle1" gutterBottom>Options de construction</Typography>
-        <Grid container spacing={2}>
-          <Grid item xs={12} sm={6}>
+        <Grid container spacing={2} sx={{ width: '100%' }}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               fullWidth
               label="Épaisseur panneau"
@@ -331,7 +331,7 @@ const FurnitureTab = () => {
           </Grid>
 
           {/* Nouvelle option pour le débordement des côtés */}
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <FormControlLabel
               control={
                 <Checkbox
@@ -343,7 +343,7 @@ const FurnitureTab = () => {
             />
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <FormControlLabel
               control={
                 <Checkbox
@@ -357,7 +357,7 @@ const FurnitureTab = () => {
 
           {furniture.construction.hasPlinths && (
             <>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField
                   fullWidth
                   label="Hauteur plinthe"
@@ -370,7 +370,7 @@ const FurnitureTab = () => {
                 />
               </Grid>
               
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <FormControlLabel
                   control={
                     <Checkbox
@@ -383,14 +383,14 @@ const FurnitureTab = () => {
               </Grid>
               
               {/* Retraits des plinthes - Section accordion pour ne pas encombrer l'interface */}
-              <Grid item xs={12}>
+              <Grid size={12}>
                 <Accordion>
                   <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                     <Typography>Retrait des plinthes</Typography>
                   </AccordionSummary>
                   <AccordionDetails>
-                    <Grid container spacing={2}>
-                      <Grid item xs={12} sm={6}>
+                    <Grid container spacing={2} sx={{ width: '100%' }}>
+                      <Grid size={{ xs: 12, sm: 6 }}>
                         <TextField
                           fullWidth
                           label="Retrait avant"
@@ -403,7 +403,7 @@ const FurnitureTab = () => {
                         />
                       </Grid>
                       
-                      <Grid item xs={12} sm={6}>
+                      <Grid size={{ xs: 12, sm: 6 }}>
                         <TextField
                           fullWidth
                           label="Retrait arrière"
@@ -416,7 +416,7 @@ const FurnitureTab = () => {
                         />
                       </Grid>
                       
-                      <Grid item xs={12} sm={6}>
+                      <Grid size={{ xs: 12, sm: 6 }}>
                         <TextField
                           fullWidth
                           label="Retrait gauche"
@@ -429,7 +429,7 @@ const FurnitureTab = () => {
                         />
                       </Grid>
                       
-                      <Grid item xs={12} sm={6}>
+                      <Grid size={{ xs: 12, sm: 6 }}>
                         <TextField
                           fullWidth
                           label="Retrait droit"
@@ -447,14 +447,14 @@ const FurnitureTab = () => {
               </Grid>
               
               {/* Configuration du socle */}
-              <Grid item xs={12}>
+              <Grid size={12}>
                 <Accordion>
                   <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                     <Typography>Configuration du socle</Typography>
                   </AccordionSummary>
                   <AccordionDetails>
-                    <Grid container spacing={2}>
-                      <Grid item xs={12} sm={6}>
+                    <Grid container spacing={2} sx={{ width: '100%' }}>
+                      <Grid size={{ xs: 12, sm: 6 }}>
                         <TextField
                           fullWidth
                           label="Séparations verticales"
@@ -467,7 +467,7 @@ const FurnitureTab = () => {
                         />
                       </Grid>
                       
-                      <Grid item xs={12} sm={6}>
+                      <Grid size={{ xs: 12, sm: 6 }}>
                         <FormControlLabel
                           control={
                             <Checkbox
@@ -481,7 +481,7 @@ const FurnitureTab = () => {
                       
                       {(furniture.construction.socleSupports > 0 || furniture.construction.socleSideSupports) && (
                         <>
-                          <Grid item xs={12} sm={6}>
+                          <Grid size={{ xs: 12, sm: 6 }}>
                             <FormControl fullWidth>
                               <InputLabel>Type de dessus de socle</InputLabel>
                               <Select
@@ -496,7 +496,7 @@ const FurnitureTab = () => {
                           </Grid>
                           
                           {furniture.construction.socleTopType === 'traverses' && (
-                            <Grid item xs={12} sm={6}>
+                            <Grid size={{ xs: 12, sm: 6 }}>
                               <TextField
                                 fullWidth
                                 label="Largeur des traverses"
@@ -518,7 +518,7 @@ const FurnitureTab = () => {
             </>
           )}
 
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <FormControlLabel
               control={
                 <Checkbox
@@ -533,7 +533,7 @@ const FurnitureTab = () => {
           
           {furniture.construction.hasBackPanel && (
             <>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField
                   fullWidth
                   label="Épaisseur panneau arrière"
@@ -546,7 +546,7 @@ const FurnitureTab = () => {
                 />
               </Grid>
               
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField
                   fullWidth
                   label="Retrait panneau arrière"
@@ -559,7 +559,7 @@ const FurnitureTab = () => {
                 />
               </Grid>
               
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField
                   fullWidth
                   label="Jeu pour rainure"
@@ -572,7 +572,7 @@ const FurnitureTab = () => {
                 />
               </Grid>
               
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField
                   fullWidth
                   label="Débordement pour rainure"
@@ -586,17 +586,17 @@ const FurnitureTab = () => {
               </Grid>
               
               {/* Options avancées du panneau arrière */}
-              <Grid item xs={12}>
+              <Grid size={12}>
                 <Accordion>
                   <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                     <Typography>Options avancées pour panneau arrière</Typography>
                   </AccordionSummary>
                   <AccordionDetails>
-                    <Grid container spacing={2}>
-                      <Grid item xs={12}>
+                    <Grid container spacing={2} sx={{ width: '100%' }}>
+                      <Grid size={12}>
                         <Typography variant="subtitle2" gutterBottom>Panneau traversant sur</Typography>
-                        <Grid container spacing={1}>
-                          <Grid item xs={6} sm={3}>
+                        <Grid container spacing={1} sx={{ width: '100%' }}>
+                          <Grid size={{ xs: 6, sm: 3 }}>
                             <FormControlLabel
                               control={
                                 <Checkbox
@@ -613,7 +613,7 @@ const FurnitureTab = () => {
                               label="Dessus"
                             />
                           </Grid>
-                          <Grid item xs={6} sm={3}>
+                          <Grid size={{ xs: 6, sm: 3 }}>
                             <FormControlLabel
                               control={
                                 <Checkbox
@@ -630,7 +630,7 @@ const FurnitureTab = () => {
                               label="Dessous"
                             />
                           </Grid>
-                          <Grid item xs={6} sm={3}>
+                          <Grid size={{ xs: 6, sm: 3 }}>
                             <FormControlLabel
                               control={
                                 <Checkbox
@@ -647,7 +647,7 @@ const FurnitureTab = () => {
                               label="Côté gauche"
                             />
                           </Grid>
-                          <Grid item xs={6} sm={3}>
+                          <Grid size={{ xs: 6, sm: 3 }}>
                             <FormControlLabel
                               control={
                                 <Checkbox
@@ -667,10 +667,10 @@ const FurnitureTab = () => {
                         </Grid>
                       </Grid>
                       
-                      <Grid item xs={12}>
+                      <Grid size={12}>
                         <Typography variant="subtitle2" gutterBottom>Créer une rainure sur</Typography>
-                        <Grid container spacing={1}>
-                          <Grid item xs={6} sm={3}>
+                        <Grid container spacing={1} sx={{ width: '100%' }}>
+                          <Grid size={{ xs: 6, sm: 3 }}>
                             <FormControlLabel
                               control={
                                 <Checkbox
@@ -682,7 +682,7 @@ const FurnitureTab = () => {
                               label="Dessus"
                             />
                           </Grid>
-                          <Grid item xs={6} sm={3}>
+                          <Grid size={{ xs: 6, sm: 3 }}>
                             <FormControlLabel
                               control={
                                 <Checkbox
@@ -694,7 +694,7 @@ const FurnitureTab = () => {
                               label="Dessous"
                             />
                           </Grid>
-                          <Grid item xs={6} sm={3}>
+                          <Grid size={{ xs: 6, sm: 3 }}>
                             <FormControlLabel
                               control={
                                 <Checkbox
@@ -706,7 +706,7 @@ const FurnitureTab = () => {
                               label="Côté gauche"
                             />
                           </Grid>
-                          <Grid item xs={6} sm={3}>
+                          <Grid size={{ xs: 6, sm: 3 }}>
                             <FormControlLabel
                               control={
                                 <Checkbox
