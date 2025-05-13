@@ -22,7 +22,8 @@ import ProjectDetail from './pages/ProjectDetail';
 import Materials from './pages/Materials';
 import NotFound from './pages/NotFound';
 import Settings from './pages/Settings';
-import FurnitureDesignerPage from './pages/FurnitureDesignerPage';
+// Import supprimé : import FurnitureDesignerPage from './pages/FurnitureDesignerPage';
+import FurnitureDesignerPopup from './components/furniture3d/FurnitureDesignerPopup';
 
 // Firebase
 import { auth } from './services/firebase';
@@ -63,8 +64,8 @@ const AuthenticatedApp = ({ user }) => {
               <Route path="/projects" element={<Projects />} />
               <Route path="/projects/:projectId" element={<ProjectDetail />} />
               <Route path="/materials" element={<Materials />} />
-              <Route path="/settings" element={<Settings />} /> {/* Nouvelle route */}
-              <Route path="/conception-3d" element={<FurnitureDesignerPage />} />
+              <Route path="/settings" element={<Settings />} />
+              {/* Route supprimée : <Route path="/conception-3d" element={<FurnitureDesignerPage />} /> */}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Box>
@@ -74,6 +75,16 @@ const AuthenticatedApp = ({ user }) => {
     </ProjectProvider>
   );
 };
+
+// Composant de l'application non-authentifiée qui contient uniquement quelques routes
+const UnauthenticatedApp = () => (
+  <Routes>
+    <Route path="/login" element={<Login />} />
+    <Route path="/register" element={<Register />} />
+    <Route path="/settings" element={<Settings />} />
+    <Route path="*" element={<Navigate to="/login" replace />} />
+  </Routes>
+);
 
 function App() {
   const [user, setUser] = useState(null);
@@ -109,16 +120,13 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      {user ? (
-        <AuthenticatedApp user={user} />
-      ) : (
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="*" element={<Navigate to="/login" replace />} />
-          <Route path="/settings" element={<Settings />} />
-        </Routes>
-      )}
+      {/* Route pour le popup de conception 3D - accessible même sans authentification */}
+      <Routes>
+        <Route path="/furniture-designer-popup" element={<FurnitureDesignerPopup />} />
+        
+        {/* Routes normales de l'application */}
+        <Route path="/*" element={user ? <AuthenticatedApp user={user} /> : <UnauthenticatedApp />} />
+      </Routes>
     </ThemeProvider>
   );
 }
