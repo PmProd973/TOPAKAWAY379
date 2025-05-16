@@ -1,13 +1,554 @@
-body {
+/* Style CAO professionnel pour l'application CNC Wood */
+
+/* Reset et styles de base */
+* {
+  box-sizing: border-box;
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  padding: 0;
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+:root {
+  /* Palette de couleurs professionnelle */
+  --bg-dark: #1e2124;
+  --bg-medium: #2a2e32;
+  --bg-light: #32383e;
+  --text-light: #e9ecef;
+  --text-muted: #adb5bd;
+  --accent-blue: #3a86ff;
+  --accent-green: #38b000;
+  --accent-red: #ff5a5f;
+  --border-color: #454b53;
+  --panel-header: #2a2e32;
+  --input-bg: #24292e;
+  --hover-bg: #3a4149;
+  --grid-color: rgba(75, 85, 99, 0.15);
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: var(--text-light);
+  background-color: var(--bg-dark);
+  line-height: 1.6;
+  overflow: hidden;
+}
+
+/* Interface à 3 panneaux avec espace 3D complet */
+.app-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Barre d'outils supérieure */
+.app-header {
+  background-color: var(--bg-dark);
+  border-bottom: 1px solid var(--border-color);
+  padding: 0.5rem 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 48px;
+  z-index: 10;
+}
+
+.app-header h1 {
+  font-size: 1.25rem;
+  font-weight: 500;
+}
+
+.app-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* Conteneur principal avec trois panneaux */
+.app-content {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* Panneau latéral gauche - Outils et paramètres */
+.sidebar {
+  width: 280px;
+  background-color: var(--bg-medium);
+  border-right: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Sections du panneau latéral */
+.sidebar-section {
+  padding: 1rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.sidebar-section h2 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  margin-bottom: 0.75rem;
+}
+
+/* Vue 3D centrale - Agrandie pour occuper tout l'espace disponible */
+.view-3d {
+  flex: 1;
+  background-color: var(--bg-dark);
+  position: relative;
+  overflow: hidden;
+}
+
+.view-3d canvas {
+  width: 100%;
+  height: 100%;
+  outline: none;
+}
+
+/* Panneau latéral droit - Propriétés */
+.properties-panel {
+  width: 300px;
+  background-color: var(--bg-medium);
+  border-left: 1px solid var(--border-color);
+  overflow-y: auto;
+}
+
+.properties-header {
+  padding: 0.75rem 1rem;
+  background-color: var(--panel-header);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.properties-header h2 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+}
+
+.properties-content {
+  padding: 1rem;
+}
+
+/* Style des formulaires amélioré */
+.control-group {
+  margin-bottom: 1rem;
+}
+
+.control-group label {
+  display: block;
+  font-size: 0.8rem;
+  margin-bottom: 0.25rem;
+  color: var(--text-muted);
+}
+
+input, select, textarea {
+  width: 100%;
+  background-color: var(--input-bg);
+  border: 1px solid var(--border-color);
+  color: var(--text-light);
+  padding: 0.4rem 0.5rem;
+  border-radius: 3px;
+  font-size: 0.9rem;
+  transition: border-color 0.2s;
+}
+
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--accent-blue);
+}
+
+/* Checkboxes stylisés */
+.form-check {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.form-check input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  margin-right: 0.5rem;
+  accent-color: var(--accent-blue);
+}
+
+/* Boutons professionnels */
+button {
+  cursor: pointer;
+  font-size: 0.85rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 3px;
+  border: none;
+  transition: all 0.2s;
+  background-color: var(--bg-light);
+  color: var(--text-light);
+  border: 1px solid var(--border-color);
+}
+
+button:hover {
+  background-color: var(--hover-bg);
+}
+
+.btn-primary {
+  background-color: var(--accent-blue);
+  border: 1px solid var(--accent-blue);
+}
+
+.btn-primary:hover {
+  background-color: #2a75e0;
+}
+
+.btn-danger {
+  background-color: var(--accent-red);
+  border: 1px solid var(--accent-red);
+}
+
+.btn-danger:hover {
+  background-color: #e04c51;
+}
+
+/* Boutons des outils */
+.tools-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.tool-button {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  text-align: left;
+  padding: 0.5rem 0.75rem;
+  background-color: var(--bg-medium);
+  border: 1px solid var(--border-color);
+  color: var(--text-light);
+  border-radius: 3px;
+  transition: all 0.2s ease;
+}
+
+.tool-button:hover {
+  background-color: var(--hover-bg);
+}
+
+.tool-button.active {
+  background-color: var(--accent-blue);
+  border-color: var(--accent-blue);
+}
+
+.tool-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  margin-right: 0.75rem;
+  font-size: 1.2rem;
+}
+
+/* Grille de dimensions */
+.dimensions-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.dimensions-grid .control-group:last-child {
+  grid-column: span 2;
+}
+
+/* Message pour propriétés vides */
+.property-empty {
+  color: var(--text-muted);
+  font-style: italic;
+  padding: 1rem 0;
+}
+
+/* Sous-sections de propriétés */
+.property-section {
+  margin-bottom: 1.5rem;
+}
+
+.property-section h3 {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.25rem;
+  border-bottom: 1px solid var(--border-color);
+}
+/* Modification de la zone 3D pour occuper tout l'espace */
+.view-3d {
+  flex: 1;
+  background-color: var(--bg-dark);
+  position: relative;
+  overflow: hidden;
+  height: 100vh; /* Occupe toute la hauteur de la fenêtre */
+  position: relative;
+}
+
+/* Barre d'outils flottante plutôt qu'une section séparée */
+.app-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  background-color: rgba(30, 33, 36, 0.8); /* Semi-transparent */
+  backdrop-filter: blur(5px);
+  z-index: 100;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+/* Sidebar flottante */
+.sidebar {
+  position: absolute;
+  top: 48px; /* Hauteur de l'en-tête */
+  left: 0;
+  bottom: 0;
+  width: 280px;
+  background-color: var(--bg-medium);
+  border-right: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
+  z-index: 10;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Panneau de propriétés flottant */
+.properties-panel {
+  position: absolute;
+  top: 48px; /* Hauteur de l'en-tête */
+  right: 0;
+  bottom: 0;
+  width: 300px;
+  background-color: var(--bg-medium);
+  border-left: 1px solid var(--border-color);
+  overflow-y: auto;
+  z-index: 10;
+  box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Ajuster la structure globale */
+.app-container {
+  position: relative;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.app-content {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+/* Ajout au index.css pour une interface professionnelle avec zone 3D complète */
+
+/* Structure globale de l'application */
+.app-container {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* En-tête flottant */
+.app-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 48px;
+  background-color: rgba(30, 33, 36, 0.85);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--border-color);
+  padding: 0 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 100;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Zone principale de l'application */
+.app-content {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+/* Vue 3D en plein écran */
+.view-3d {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--bg-dark);
+  z-index: 1;
+}
+
+/* Sidebar flottante */
+.sidebar {
+  position: absolute;
+  top: 48px; /* Sous l'en-tête */
+  left: 0;
+  bottom: 24px; /* Au-dessus de la barre d'état */
+  width: 280px;
+  background-color: rgba(42, 46, 50, 0.85);
+  backdrop-filter: blur(8px);
+  border-right: 1px solid var(--border-color);
+  z-index: 10;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+  overflow-y: auto;
+  transition: transform 0.3s ease;
+}
+
+/* Panneau de propriétés flottant */
+.properties-panel {
+  position: absolute;
+  top: 48px; /* Sous l'en-tête */
+  right: 0;
+  bottom: 24px; /* Au-dessus de la barre d'état */
+  width: 300px;
+  background-color: rgba(42, 46, 50, 0.85);
+  backdrop-filter: blur(8px);
+  border-left: 1px solid var(--border-color);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.properties-header {
+  padding: 0.75rem 1rem;
+  background-color: rgba(50, 56, 62, 0.9);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.properties-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+}
+
+/* Barre d'état */
+.status-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 24px;
+  background-color: var(--bg-dark);
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  padding: 0 1rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  z-index: 100;
+}
+
+.status-coordinates {
+  display: flex;
+  align-items: center;
+}
+
+.status-info {
+  display: flex;
+  align-items: center;
+}
+
+/* Ajustements pour les petits écrans */
+@media (max-width: 1200px) {
+  .sidebar, .properties-panel {
+    width: 260px;
+  }
+}
+
+/* Boutons d'action plus professionnels */
+.btn-outline {
+  background-color: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-light);
+  padding: 0.4rem 0.75rem;
+  font-size: 0.8rem;
+  border-radius: 3px;
+  transition: all 0.2s;
+}
+
+.btn-outline:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: var(--accent-blue);
+}
+
+.btn-primary {
+  background-color: var(--accent-blue);
+  border: 1px solid var(--accent-blue);
+  color: white;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.8rem;
+  border-radius: 3px;
+  transition: all 0.2s;
+  margin-left: 0.5rem;
+}
+
+.btn-primary:hover {
+  background-color: #2a75e0;
+  border-color: #2a75e0;
+}
+
+.btn-danger {
+  background-color: var(--accent-red);
+  border: 1px solid var(--accent-red);
+  color: white;
+  padding: 0.35rem 0.65rem;
+  font-size: 0.75rem;
+  border-radius: 3px;
+  transition: all 0.2s;
+}
+
+.btn-danger:hover {
+  background-color: #e04c51;
+  border-color: #e04c51;
+}
+
+/* Grille d'outils améliorée */
+.tools-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Pour les dimensions */
+.dimensions-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+}
+
+/* Adaptations pour les petits écrans */
+@media (max-width: 1200px) {
+  .sidebar, .properties-panel {
+    width: 260px;
+  }
 }
