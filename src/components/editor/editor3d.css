@@ -1,0 +1,130 @@
+/* editor3d.css - Styles pour l'éditeur 3D et son menu */
+
+/* Conteneur principal de l'éditeur 3D - s'assure qu'il occupe tout l'espace */
+.editor3d-container {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  overflow: hidden;
+}
+
+/* Barre de menu en haut de l'éditeur */
+.editor3d-menu {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  height: 40px !important;
+  background-color: rgba(42, 46, 50, 0.85) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  color: white !important;
+  display: flex !important;
+  align-items: center !important;
+  padding: 0 15px !important;
+  z-index: 9999 !important;
+  border-bottom: 1px solid rgba(255,255,255,0.1) !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif !important;
+}
+
+/* Titre de la section dans le menu */
+.editor3d-menu-title {
+  font-weight: bold !important;
+  margin-right: 20px !important;
+  font-size: 14px !important;
+  color: white !important;
+}
+
+/* Groupe de contrôles dans le menu */
+.editor3d-menu-group {
+  display: flex !important;
+  align-items: center !important;
+  margin-right: 15px !important;
+}
+
+/* Étiquette pour les contrôles */
+.editor3d-menu-label {
+  margin-right: 8px !important;
+  font-size: 13px !important;
+  color: white !important;
+}
+
+/* Select dans le menu */
+.editor3d-menu-select {
+  padding: 4px 8px !important;
+  background-color: rgba(255,255,255,0.1) !important;
+  color: white !important;
+  border: 1px solid rgba(255,255,255,0.2) !important;
+  border-radius: 3px !important;
+  font-size: 13px !important;
+  cursor: pointer !important;
+}
+
+/* Options dans le select */
+.editor3d-menu-option {
+  color: black !important;
+  background-color: white !important;
+  padding: 4px !important;
+}
+
+/* Groupe de checkboxes */
+.editor3d-menu-checkboxes {
+  display: flex !important;
+  align-items: center !important;
+  gap: 15px !important;
+}
+
+/* Label pour checkbox */
+.editor3d-menu-checkbox-label {
+  display: flex !important;
+  align-items: center !important;
+  cursor: pointer !important;
+  font-size: 13px !important;
+  color: white !important;
+}
+
+/* Input checkbox */
+.editor3d-menu-checkbox {
+  margin-right: 5px !important;
+  cursor: pointer !important;
+}
+
+/* Container pour bouton de réinitialisation */
+.editor3d-menu-reset-container {
+  margin-left: auto !important;
+}
+
+/* Bouton de réinitialisation */
+.editor3d-menu-reset-btn {
+  padding: 5px 10px !important;
+  background-color: #4285f4 !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 3px !important;
+  cursor: pointer !important;
+  font-size: 13px !important;
+  font-weight: normal !important;
+  text-transform: none !important;
+}
+
+.editor3d-menu-reset-btn:hover {
+  background-color: #2a75e0 !important;
+}
+
+/* Indicateur de zoom */
+.editor3d-zoom-indicator {
+  position: absolute !important;
+  bottom: 10px !important;
+  left: 10px !important;
+  padding: 6px 10px !important;
+  background-color: rgba(0,0,0,0.5) !important;
+  color: white !important;
+  border-radius: 4px !important;
+  font-size: 12px !important;
+  opacity: 0.8 !important;
+  pointer-events: none !important;
+  z-index: 999 !important;
+}

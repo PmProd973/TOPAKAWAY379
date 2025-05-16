@@ -1,0 +1,214 @@
+/* Styles modernes pour l'application CNC Wood */
+
+/* Reset et styles de base */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #333;
+  background-color: #f8f9fa;
+  line-height: 1.6;
+}
+
+/* Layout principal */
+.app-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Header */
+.app-header {
+  background-color: #2c3e50;
+  color: white;
+  padding: 1rem 2rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.app-header h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.app-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+/* Contenu principal */
+.app-content {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* Panneau latéral */
+.sidebar {
+  width: 300px;
+  background-color: white;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05);
+  padding: 1.5rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.sidebar-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.sidebar-section h2 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #2c3e50;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #e9ecef;
+}
+
+/* Visualisation 3D */
+.view-3d {
+  flex: 1;
+  background-color: #f0f4f8;
+  position: relative;
+}
+
+/* Panneau de propriétés */
+.properties-panel {
+  width: 320px;
+  background-color: white;
+  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.05);
+  padding: 1.5rem;
+  overflow-y: auto;
+}
+
+.properties-panel h2 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #e9ecef;
+}
+
+/* Formulaires et contrôles */
+.control-group {
+  margin-bottom: 1rem;
+}
+
+label {
+  display: block;
+  margin-bottom: 0.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #495057;
+}
+
+input, select, textarea {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+input:focus, select:focus, textarea:focus {
+  border-color: #80bdff;
+  outline: 0;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* Boutons */
+button {
+  cursor: pointer;
+  font-size: 0.875rem;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+.btn-primary {
+  background-color: #4361ee;
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: #3a56d4;
+}
+
+.btn-secondary {
+  background-color: #6c757d;
+  color: white;
+}
+
+.btn-secondary:hover {
+  background-color: #5a6268;
+}
+
+.btn-outline {
+  background-color: transparent;
+  border: 1px solid #ced4da;
+}
+
+.btn-outline:hover {
+  background-color: #f8f9fa;
+}
+
+/* Outils d'usinage */
+.tools-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
+}
+
+.tool-button {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem;
+  background-color: #fff;
+  border: 1px solid #e9ecef;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.tool-button:hover {
+  background-color: #f8f9fa;
+  border-color: #ced4da;
+}
+
+.tool-button.active {
+  background-color: #e7f5ff;
+  border-color: #74c0fc;
+}
+
+.tool-icon {
+  margin-right: 0.5rem;
+  font-size: 1.25rem;
+}
+
+/* Dimensions */
+.dimensions-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+}
+
+/* Propriétés */
+.property-empty {
+  color: #adb5bd;
+  font-style: italic;
+  padding: 1rem 0;
+}
